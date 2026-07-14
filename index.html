@@ -378,7 +378,8 @@
 
     .redaction-box {
       pointer-events: auto;
-      cursor: pointer;
+      cursor: move;
+      touch-action: none;
     }
 
     .redaction-box.active {
@@ -445,6 +446,45 @@
       fill: none;
       stroke-linecap: round;
       stroke-linejoin: round;
+    }
+
+    .resize-handle {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border: 2px solid var(--gold);
+      border-radius: 999px;
+      background: #fffdf8;
+      box-shadow: 0 4px 10px rgba(20, 18, 14, .18);
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(.86);
+      transition: opacity .16s ease, transform .16s ease;
+    }
+
+    .redaction-box:hover .resize-handle,
+    .redaction-box.active .resize-handle {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .resize-handle[data-handle="n"],
+    .resize-handle[data-handle="s"] {
+      cursor: ns-resize;
+    }
+
+    .resize-handle[data-handle="e"],
+    .resize-handle[data-handle="w"] {
+      cursor: ew-resize;
+    }
+
+    .resize-handle[data-handle="nw"],
+    .resize-handle[data-handle="se"] {
+      cursor: nwse-resize;
+    }
+
+    .resize-handle[data-handle="ne"],
+    .resize-handle[data-handle="sw"] {
+      cursor: nesw-resize;
     }
 
     .side {
@@ -827,6 +867,7 @@
       strength: 16,
       manualMode: false,
       drawing: null,
+      editing: null,
       applied: false,
       scale: 1,
       nextId: 1
@@ -912,6 +953,9 @@
     overlay.addEventListener("pointermove", updateDrawing);
     overlay.addEventListener("pointerup", finishDrawing);
     overlay.addEventListener("pointercancel", cancelDrawing);
+    document.addEventListener("pointermove", updateBoxEdit);
+    document.addEventListener("pointerup", finishBoxEdit);
+    document.addEventListener("pointercancel", finishBoxEdit);
 
     function loadFile(file) {
       const reader = new FileReader();
@@ -1147,6 +1191,85 @@
       renderOverlay();
     }
 
+    function startBoxEdit(event, id, mode) {
+      if (!state.image || event.button !== 0) return;
+      const box = state.boxes.find((item) => item.id === id);
+      if (!box) return;
+      event.preventDefault();
+      event.stopPropagation();
+      selectBox(id);
+      resetCanvasForBoxEditing();
+      const point = getCanvasPoint(event);
+      state.editing = {
+        id,
+        mode,
+        startX: point.x,
+        startY: point.y,
+        original: { x: box.x, y: box.y, w: box.w, h: box.h }
+      };
+    }
+
+    function updateBoxEdit(event) {
+      if (!state.editing || !state.image) return;
+      const box = state.boxes.find((item) => item.id === state.editing.id);
+      if (!box) return;
+      const point = getCanvasPoint(event);
+      const dx = point.x - state.editing.startX;
+      const dy = point.y - state.editing.startY;
+      const next = state.editing.mode === "move"
+        ? moveBox(state.editing.original, dx, dy)
+        : resizeBox(state.editing.original, dx, dy, state.editing.mode);
+      Object.assign(box, next);
+      renderOverlay();
+      renderResults();
+    }
+
+    function finishBoxEdit() {
+      if (!state.editing) return;
+      state.editing = null;
+      render();
+    }
+
+    function moveBox(box, dx, dy) {
+      return {
+        x: Math.round(clamp(box.x + dx, 0, canvas.width - box.w)),
+        y: Math.round(clamp(box.y + dy, 0, canvas.height - box.h)),
+        w: box.w,
+        h: box.h
+      };
+    }
+
+    function resizeBox(box, dx, dy, handle) {
+      const minSize = 18;
+      let left = box.x;
+      let top = box.y;
+      let right = box.x + box.w;
+      let bottom = box.y + box.h;
+
+      if (handle.includes("w")) left = clamp(box.x + dx, 0, right - minSize);
+      if (handle.includes("e")) right = clamp(box.x + box.w + dx, left + minSize, canvas.width);
+      if (handle.includes("n")) top = clamp(box.y + dy, 0, bottom - minSize);
+      if (handle.includes("s")) bottom = clamp(box.y + box.h + dy, top + minSize, canvas.height);
+
+      return {
+        x: Math.round(left),
+        y: Math.round(top),
+        w: Math.round(right - left),
+        h: Math.round(bottom - top)
+      };
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    }
+
+    function resetCanvasForBoxEditing() {
+      if (!state.applied) return;
+      redrawOriginal();
+      state.applied = false;
+      renderButtons();
+    }
+
     function getCanvasPoint(event) {
       const rect = canvas.getBoundingClientRect();
       const scaleX = canvas.width / rect.width;
@@ -1187,6 +1310,7 @@
       state.applied = false;
       state.manualMode = false;
       state.drawing = null;
+      state.editing = null;
       canvas.width = 0;
       canvas.height = 0;
       fileInput.value = "";
@@ -1286,6 +1410,10 @@
         element.style.top = `${box.y}px`;
         element.style.width = `${box.w}px`;
         element.style.height = `${box.h}px`;
+        element.addEventListener("pointerdown", (event) => {
+          if (event.target.closest("button") || event.target.classList.contains("resize-handle")) return;
+          startBoxEdit(event, box.id, "move");
+        });
         element.addEventListener("click", (event) => {
           event.stopPropagation();
           selectBox(box.id);
@@ -1305,6 +1433,7 @@
           deleteBox(box.id);
         });
         element.appendChild(closeButton);
+        addResizeHandles(element, box.id);
         overlay.appendChild(element);
       }
 
@@ -1316,6 +1445,29 @@
         element.style.width = `${state.drawing.w}px`;
         element.style.height = `${state.drawing.h}px`;
         overlay.appendChild(element);
+      }
+    }
+
+    function addResizeHandles(element, id) {
+      const handles = [
+        ["nw", "0%", "0%"],
+        ["n", "50%", "0%"],
+        ["ne", "100%", "0%"],
+        ["e", "100%", "50%"],
+        ["se", "100%", "100%"],
+        ["s", "50%", "100%"],
+        ["sw", "0%", "100%"],
+        ["w", "0%", "50%"]
+      ];
+
+      for (const [handle, left, top] of handles) {
+        const node = document.createElement("span");
+        node.className = "resize-handle";
+        node.dataset.handle = handle;
+        node.style.left = left;
+        node.style.top = top;
+        node.addEventListener("pointerdown", (event) => startBoxEdit(event, id, handle));
+        element.appendChild(node);
       }
     }
 
