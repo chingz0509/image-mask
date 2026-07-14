@@ -1,0 +1,1383 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>隐私截图打码器</title>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <style>
+    :root {
+      --bg: #f5f3ee;
+      --panel: #fffdf8;
+      --ink: #161616;
+      --muted: #6b665d;
+      --line: #ded8cd;
+      --line-strong: #c8bfb1;
+      --accent: #0f766e;
+      --accent-2: #d1495b;
+      --gold: #bd8b13;
+      --blue: #315c87;
+      --shadow: 0 18px 50px rgba(30, 28, 24, .12);
+      --radius: 8px;
+      color-scheme: light;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(120deg, rgba(15, 118, 110, .08), transparent 36%),
+        linear-gradient(260deg, rgba(209, 73, 91, .08), transparent 40%),
+        var(--bg);
+      color: var(--ink);
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: .48;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 20px 28px;
+      border-bottom: 1px solid rgba(222, 216, 205, .9);
+      background: rgba(255, 253, 248, .72);
+      backdrop-filter: blur(18px);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 220px;
+    }
+
+    .mark {
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--ink);
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: var(--ink);
+      color: var(--panel);
+      box-shadow: 4px 4px 0 rgba(15, 118, 110, .32);
+      flex: 0 0 auto;
+    }
+
+    .mark svg,
+    .icon svg {
+      width: 19px;
+      height: 19px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .tagline {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .privacy-note {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #24534e;
+      background: rgba(15, 118, 110, .1);
+      border: 1px solid rgba(15, 118, 110, .24);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 18px;
+      padding: 18px;
+      min-height: 0;
+    }
+
+    .stage-shell,
+    .side {
+      background: rgba(255, 253, 248, .82);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .stage-shell {
+      min-height: 640px;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      overflow: hidden;
+    }
+
+    .stage-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 253, 248, .88);
+    }
+
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .file-button,
+    .primary-button,
+    .ghost-button,
+    .icon-button {
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border-radius: 7px;
+      border: 1px solid transparent;
+      padding: 0 12px;
+      font-weight: 650;
+      font-size: 13px;
+      transition: transform .16s ease, box-shadow .16s ease, background .16s ease, border-color .16s ease;
+      user-select: none;
+    }
+
+    .file-button,
+    .primary-button {
+      background: var(--ink);
+      color: var(--panel);
+      box-shadow: 0 8px 18px rgba(22, 22, 22, .18);
+    }
+
+    .file-button:hover,
+    .primary-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 24px rgba(22, 22, 22, .22);
+    }
+
+    .ghost-button,
+    .icon-button {
+      background: #fffaf0;
+      color: var(--ink);
+      border-color: var(--line);
+    }
+
+    .ghost-button:hover,
+    .icon-button:hover {
+      background: #ffffff;
+      border-color: var(--line-strong);
+      transform: translateY(-1px);
+    }
+
+    .danger {
+      color: #922235;
+      border-color: rgba(209, 73, 91, .36);
+      background: rgba(209, 73, 91, .08);
+    }
+
+    .icon-button {
+      width: 38px;
+      padding: 0;
+    }
+
+    .icon-button svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .stage {
+      position: relative;
+      min-height: 0;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      overflow: auto;
+      background:
+        linear-gradient(90deg, rgba(22, 22, 22, .035) 1px, transparent 1px),
+        linear-gradient(rgba(22, 22, 22, .035) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+
+    .dropzone {
+      width: min(680px, 92%);
+      min-height: 360px;
+      border: 1.5px dashed var(--line-strong);
+      border-radius: 8px;
+      background: rgba(255, 253, 248, .76);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 34px;
+      transition: border-color .18s ease, background .18s ease, transform .18s ease;
+    }
+
+    .dropzone.dragging {
+      border-color: var(--accent);
+      background: rgba(15, 118, 110, .08);
+      transform: scale(.995);
+    }
+
+    .drop-icon {
+      width: 58px;
+      height: 58px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 18px;
+      background: var(--ink);
+      color: var(--panel);
+    }
+
+    .drop-icon svg {
+      width: 28px;
+      height: 28px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .drop-title {
+      margin: 0;
+      font-size: clamp(26px, 4vw, 42px);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .drop-copy {
+      margin: 14px auto 0;
+      max-width: 460px;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    .canvas-wrap {
+      position: relative;
+      display: none;
+      width: fit-content;
+      max-width: 100%;
+      box-shadow: 0 20px 54px rgba(20, 18, 14, .2);
+      background: white;
+      line-height: 0;
+    }
+
+    .image-close-button {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 8;
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      border: 1px solid rgba(22, 22, 22, .12);
+      background: rgba(255, 253, 248, .9);
+      color: var(--ink);
+      box-shadow: 0 10px 24px rgba(20, 18, 14, .16);
+      backdrop-filter: blur(10px);
+      opacity: .86;
+      transition: opacity .16s ease, transform .16s ease, background .16s ease;
+    }
+
+    .image-close-button:hover {
+      opacity: 1;
+      transform: translateY(-1px);
+      background: #ffffff;
+    }
+
+    .image-close-button svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    canvas {
+      display: block;
+      max-width: min(100%, 1100px);
+      height: auto;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      transform-origin: top left;
+    }
+
+    .redaction-box,
+    .drawing-box {
+      position: absolute;
+      border: 2px solid var(--accent-2);
+      background: rgba(209, 73, 91, .13);
+      min-width: 4px;
+      min-height: 4px;
+    }
+
+    .redaction-box {
+      pointer-events: auto;
+      cursor: pointer;
+    }
+
+    .redaction-box.active {
+      border-color: var(--gold);
+      background: rgba(189, 139, 19, .18);
+      box-shadow: 0 0 0 2px rgba(255, 253, 248, .9);
+    }
+
+    .box-label {
+      position: absolute;
+      left: -2px;
+      top: -24px;
+      max-width: 220px;
+      background: var(--accent-2);
+      color: white;
+      border-radius: 6px 6px 6px 0;
+      padding: 4px 7px;
+      font-size: 11px;
+      line-height: 1.1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      box-shadow: 0 5px 14px rgba(209, 73, 91, .18);
+    }
+
+    .redaction-box.active .box-label {
+      background: var(--gold);
+      color: #1c1605;
+    }
+
+    .box-close-button {
+      position: absolute;
+      top: -13px;
+      right: -13px;
+      width: 26px;
+      height: 26px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      border: 1px solid rgba(209, 73, 91, .3);
+      background: rgba(255, 253, 248, .96);
+      color: #922235;
+      box-shadow: 0 8px 18px rgba(20, 18, 14, .16);
+      opacity: 0;
+      transform: scale(.92);
+      transition: opacity .16s ease, transform .16s ease, background .16s ease;
+    }
+
+    .redaction-box:hover .box-close-button,
+    .redaction-box.active .box-close-button {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .box-close-button:hover {
+      background: #ffffff;
+    }
+
+    .box-close-button svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      stroke-width: 2.4;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .side {
+      padding: 14px;
+      align-self: start;
+      max-height: calc(100vh - 96px);
+      overflow: auto;
+    }
+
+    .panel-section {
+      padding: 14px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .panel-section:first-child {
+      padding-top: 0;
+    }
+
+    .panel-section:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .section-title {
+      margin: 0 0 10px;
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      background: #eee7da;
+      padding: 5px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+    }
+
+    .segmented button {
+      height: 36px;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 750;
+      font-size: 13px;
+    }
+
+    .segmented button.active {
+      background: var(--panel);
+      color: var(--ink);
+      box-shadow: 0 5px 14px rgba(44, 36, 21, .1);
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .field label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    input[type="range"] {
+      accent-color: var(--accent);
+      width: 100%;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .actions .primary-button,
+    .actions .ghost-button {
+      width: 100%;
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    .status {
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .meter {
+      height: 8px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #e8e0d2;
+      border: 1px solid var(--line);
+    }
+
+    .meter span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--accent), var(--blue));
+      transition: width .2s ease;
+    }
+
+    .result-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .result-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #fffaf0;
+    }
+
+    .result-main {
+      min-width: 0;
+    }
+
+    .result-type {
+      font-weight: 800;
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    .result-text {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 210px;
+    }
+
+    .mini-button {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 6px;
+      background: rgba(209, 73, 91, .1);
+      color: #922235;
+      border: 1px solid rgba(209, 73, 91, .24);
+    }
+
+    .empty {
+      color: var(--muted);
+      border: 1px dashed var(--line-strong);
+      background: rgba(255, 250, 240, .7);
+      border-radius: 8px;
+      padding: 14px;
+      line-height: 1.6;
+      font-size: 13px;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      transform: translateX(-50%) translateY(20px);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 40;
+      background: var(--ink);
+      color: var(--panel);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 13px;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, .22);
+      transition: opacity .18s ease, transform .18s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 980px) {
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 16px;
+      }
+
+      .privacy-note {
+        white-space: normal;
+      }
+
+      .workspace {
+        grid-template-columns: 1fr;
+        padding: 12px;
+      }
+
+      .stage-shell {
+        min-height: 520px;
+      }
+
+      .side {
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .stage-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .toolbar-group {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .toolbar-group .file-button,
+      .toolbar-group .ghost-button,
+      .toolbar-group .primary-button {
+        width: 100%;
+      }
+
+      .stage {
+        padding: 10px;
+      }
+
+      .dropzone {
+        width: 100%;
+        min-height: 310px;
+        padding: 24px 16px;
+      }
+
+      .actions {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z"/><path d="M9.5 12.2l1.7 1.7 3.8-4"/></svg>
+        </div>
+        <div>
+          <h1>隐私截图打码器</h1>
+          <p class="tagline">发截图前，一键抹掉敏感信息。</p>
+        </div>
+      </div>
+      <div class="privacy-note">
+        <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-5"/></svg></span>
+        图片在浏览器本地处理，不上传服务器
+      </div>
+    </header>
+
+    <section class="workspace">
+      <div class="stage-shell">
+        <div class="stage-toolbar">
+          <div class="toolbar-group">
+            <label class="file-button">
+              <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></span>
+              选择图片
+              <input id="fileInput" class="file-input" type="file" accept="image/*" />
+            </label>
+            <button id="scanButton" class="ghost-button" disabled>
+              <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3H5a2 2 0 0 0-2 2v2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></svg></span>
+              自动识别
+            </button>
+            <button id="manualButton" class="ghost-button" disabled>
+              <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></span>
+              手动框选
+            </button>
+          </div>
+          <div class="toolbar-group">
+            <button id="undoButton" class="icon-button" title="撤销" disabled aria-label="撤销">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7L4 12l5 5"/><path d="M5 12h9.5a5.5 5.5 0 0 1 0 11H13"/></svg>
+            </button>
+            <button id="resetButton" class="icon-button danger" title="删除图片" disabled aria-label="删除图片">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4.5A1.5 1.5 0 0 1 9.5 3h5A1.5 1.5 0 0 1 16 4.5V6"/><path d="M19 6l-.9 13.1A2 2 0 0 1 16.1 21H7.9a2 2 0 0 1-2-1.9L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div id="stage" class="stage">
+          <div id="dropzone" class="dropzone">
+            <div>
+              <div class="drop-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/><path d="M4 4h16v16H4z"/></svg>
+              </div>
+              <h2 class="drop-title">拖入截图，马上打码</h2>
+              <p class="drop-copy">适合聊天记录、订单页、表格截图和客服沟通图。先手动框选也能直接用，自动识别会尝试找出手机号、邮箱、身份证和银行卡。</p>
+            </div>
+          </div>
+          <div id="canvasWrap" class="canvas-wrap">
+            <button id="imageCloseButton" class="image-close-button" title="删除图片" aria-label="删除图片">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+            </button>
+            <canvas id="canvas"></canvas>
+            <div id="overlay" class="overlay"></div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="side" aria-label="控制面板">
+        <section class="panel-section">
+          <p class="section-title">打码方式</p>
+          <div class="segmented" role="group" aria-label="选择打码方式">
+            <button class="active" data-mode="mosaic">马赛克</button>
+            <button data-mode="black">黑条</button>
+            <button data-mode="blur">模糊</button>
+          </div>
+          <div class="field">
+            <label for="strengthRange">
+              <span>强度</span>
+              <span id="strengthValue">16</span>
+            </label>
+            <input id="strengthRange" type="range" min="6" max="34" value="16" />
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <p class="section-title">操作</p>
+          <div class="actions">
+            <button id="applyButton" class="primary-button full" disabled>
+              <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 3h18v18H3z"/><path d="M8 8h8v8H8z"/></svg></span>
+              一键打码
+            </button>
+            <button id="downloadButton" class="ghost-button full" disabled>
+              <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg></span>
+              下载 PNG
+            </button>
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <p class="section-title">识别状态</p>
+          <div class="status">
+            <div id="statusText">还没有上传图片。</div>
+            <div class="meter" aria-hidden="true"><span id="progressBar"></span></div>
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <p class="section-title">检测结果</p>
+          <div id="resultList" class="result-list">
+            <div class="empty">上传图片后，可以手动框选隐私区域，也可以用自动识别生成候选框。</div>
+          </div>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const state = {
+      image: null,
+      fileName: "privacy-screenshot",
+      boxes: [],
+      selectedId: null,
+      mode: "mosaic",
+      strength: 16,
+      manualMode: false,
+      drawing: null,
+      applied: false,
+      scale: 1,
+      nextId: 1
+    };
+
+    const fileInput = document.getElementById("fileInput");
+    const scanButton = document.getElementById("scanButton");
+    const manualButton = document.getElementById("manualButton");
+    const undoButton = document.getElementById("undoButton");
+    const resetButton = document.getElementById("resetButton");
+    const applyButton = document.getElementById("applyButton");
+    const downloadButton = document.getElementById("downloadButton");
+    const imageCloseButton = document.getElementById("imageCloseButton");
+    const strengthRange = document.getElementById("strengthRange");
+    const strengthValue = document.getElementById("strengthValue");
+    const stage = document.getElementById("stage");
+    const dropzone = document.getElementById("dropzone");
+    const canvasWrap = document.getElementById("canvasWrap");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    const overlay = document.getElementById("overlay");
+    const statusText = document.getElementById("statusText");
+    const progressBar = document.getElementById("progressBar");
+    const resultList = document.getElementById("resultList");
+    const toast = document.getElementById("toast");
+
+    const iconTrash = '<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>';
+
+    const patterns = [
+      { type: "手机号", regex: /(?<!\d)(?:\+?86[-\s]?)?1[3-9]\d[-\s]?\d{4}[-\s]?\d{4}(?!\d)/g },
+      { type: "邮箱", regex: /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi },
+      { type: "身份证", regex: /(?<![0-9A-Z])\d{6}(?:18|19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx](?![0-9A-Z])/g },
+      { type: "银行卡", regex: /(?<!\d)(?:\d[ -]?){15,19}(?!\d)/g },
+      { type: "疑似地址", regex: /[\u4e00-\u9fa5]{2,}(?:省|市|区|县|路|街|巷|号|室)[\u4e00-\u9fa50-9A-Za-z-]{0,20}/g }
+    ];
+
+    fileInput.addEventListener("change", (event) => {
+      const file = event.target.files && event.target.files[0];
+      if (file) loadFile(file);
+    });
+
+    ["dragenter", "dragover"].forEach((name) => {
+      stage.addEventListener(name, (event) => {
+        event.preventDefault();
+        dropzone.classList.add("dragging");
+      });
+    });
+
+    ["dragleave", "drop"].forEach((name) => {
+      stage.addEventListener(name, (event) => {
+        event.preventDefault();
+        dropzone.classList.remove("dragging");
+      });
+    });
+
+    stage.addEventListener("drop", (event) => {
+      const file = event.dataTransfer.files && event.dataTransfer.files[0];
+      if (file && file.type.startsWith("image/")) loadFile(file);
+    });
+
+    document.querySelectorAll("[data-mode]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.mode = button.dataset.mode;
+        document.querySelectorAll("[data-mode]").forEach((item) => item.classList.toggle("active", item === button));
+      });
+    });
+
+    strengthRange.addEventListener("input", () => {
+      state.strength = Number(strengthRange.value);
+      strengthValue.textContent = String(state.strength);
+    });
+
+    scanButton.addEventListener("click", runOcr);
+    manualButton.addEventListener("click", toggleManualMode);
+    undoButton.addEventListener("click", undoBox);
+    resetButton.addEventListener("click", removeImage);
+    applyButton.addEventListener("click", applyRedactions);
+    downloadButton.addEventListener("click", downloadImage);
+    imageCloseButton.addEventListener("click", removeImage);
+    window.addEventListener("resize", syncOverlayScale);
+
+    overlay.addEventListener("pointerdown", startDrawing);
+    overlay.addEventListener("pointermove", updateDrawing);
+    overlay.addEventListener("pointerup", finishDrawing);
+    overlay.addEventListener("pointercancel", cancelDrawing);
+
+    function loadFile(file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const image = new Image();
+        image.onload = () => {
+          state.image = image;
+          state.fileName = file.name.replace(/\.[^.]+$/, "") || "privacy-screenshot";
+          state.boxes = [];
+          state.selectedId = null;
+          state.applied = false;
+          state.nextId = 1;
+          canvas.width = image.naturalWidth;
+          canvas.height = image.naturalHeight;
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(image, 0, 0);
+          dropzone.style.display = "none";
+          canvasWrap.style.display = "block";
+          setStatus("图片已载入。可以手动框选，或点击自动识别。", 0);
+          render();
+          toastMessage("图片已载入");
+        };
+        image.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function runOcr() {
+      if (!state.image) return;
+      if (!window.Tesseract) {
+        setStatus("OCR 脚本没有加载成功。手动框选仍然可用。", 0);
+        toastMessage("OCR 暂不可用");
+        return;
+      }
+
+      scanButton.disabled = true;
+      setStatus("正在本地识别文字...", 8);
+
+      try {
+        const result = await Tesseract.recognize(canvas, "chi_sim+eng", {
+          logger: (message) => {
+            if (message.status === "recognizing text") {
+              const percent = Math.round((message.progress || 0) * 100);
+              setStatus(`正在识别文字 ${percent}%`, percent);
+            } else if (message.status) {
+              setStatus(message.status, 12);
+            }
+          }
+        });
+
+        const found = detectSensitiveText(result.data);
+        const existingKeys = new Set(state.boxes.map(boxKey));
+        const additions = found.filter((box) => !existingKeys.has(boxKey(box)));
+
+        state.boxes.push(...additions.map((box) => ({ ...box, id: state.nextId++ })));
+        state.selectedId = additions.length ? state.boxes[state.boxes.length - 1].id : state.selectedId;
+        setStatus(additions.length ? `已找到 ${additions.length} 个疑似隐私区域。` : "没有识别到常见敏感信息，可以手动框选。", 100);
+        render();
+        toastMessage(additions.length ? `找到 ${additions.length} 处` : "未发现候选框");
+      } catch (error) {
+        console.error(error);
+        setStatus("自动识别失败。可以继续使用手动框选。", 0);
+        toastMessage("自动识别失败");
+      } finally {
+        scanButton.disabled = !state.image;
+      }
+    }
+
+    function detectSensitiveText(data) {
+      const lines = Array.isArray(data.lines) && data.lines.length ? data.lines : groupWordsIntoLines(data.words || []);
+      const boxes = [];
+
+      for (const line of lines) {
+        const text = normalizeText(line.text || "");
+        if (!text.trim()) continue;
+        for (const pattern of patterns) {
+          pattern.regex.lastIndex = 0;
+          let match;
+          while ((match = pattern.regex.exec(text))) {
+            const bbox = getLineBbox(line);
+            if (!bbox) continue;
+            boxes.push(expandBox({
+              x: bbox.x0,
+              y: bbox.y0,
+              w: bbox.x1 - bbox.x0,
+              h: bbox.y1 - bbox.y0,
+              type: pattern.type,
+              text: maskText(match[0])
+            }, 8));
+          }
+        }
+      }
+
+      const words = data.words || [];
+      for (const word of words) {
+        const text = normalizeText(word.text || "");
+        if (!text.trim()) continue;
+        for (const pattern of patterns.slice(0, 4)) {
+          pattern.regex.lastIndex = 0;
+          if (pattern.regex.test(text) && word.bbox) {
+            boxes.push(expandBox({
+              x: word.bbox.x0,
+              y: word.bbox.y0,
+              w: word.bbox.x1 - word.bbox.x0,
+              h: word.bbox.y1 - word.bbox.y0,
+              type: pattern.type,
+              text: maskText(text)
+            }, 8));
+          }
+        }
+      }
+
+      return mergeBoxes(boxes);
+    }
+
+    function groupWordsIntoLines(words) {
+      const sorted = words.filter((word) => word.bbox).sort((a, b) => a.bbox.y0 - b.bbox.y0 || a.bbox.x0 - b.bbox.x0);
+      const lines = [];
+      for (const word of sorted) {
+        const centerY = (word.bbox.y0 + word.bbox.y1) / 2;
+        let line = lines.find((item) => Math.abs(item.centerY - centerY) < Math.max(12, (word.bbox.y1 - word.bbox.y0) * .8));
+        if (!line) {
+          line = { words: [], centerY };
+          lines.push(line);
+        }
+        line.words.push(word);
+        line.centerY = (line.centerY * (line.words.length - 1) + centerY) / line.words.length;
+      }
+      return lines.map((line) => ({ ...line, text: line.words.map((word) => word.text).join(" ") }));
+    }
+
+    function getLineBbox(line) {
+      if (line.bbox) return line.bbox;
+      if (!line.words || !line.words.length) return null;
+      return line.words.reduce((bbox, word) => ({
+        x0: Math.min(bbox.x0, word.bbox.x0),
+        y0: Math.min(bbox.y0, word.bbox.y0),
+        x1: Math.max(bbox.x1, word.bbox.x1),
+        y1: Math.max(bbox.y1, word.bbox.y1)
+      }), { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity });
+    }
+
+    function expandBox(box, padding) {
+      const x = Math.max(0, Math.round(box.x - padding));
+      const y = Math.max(0, Math.round(box.y - padding));
+      const w = Math.min(canvas.width - x, Math.round(box.w + padding * 2));
+      const h = Math.min(canvas.height - y, Math.round(box.h + padding * 2));
+      return { ...box, x, y, w, h };
+    }
+
+    function mergeBoxes(boxes) {
+      const unique = [];
+      for (const box of boxes) {
+        const duplicate = unique.find((item) => overlapRatio(item, box) > .62 || boxKey(item) === boxKey(box));
+        if (duplicate) {
+          duplicate.x = Math.min(duplicate.x, box.x);
+          duplicate.y = Math.min(duplicate.y, box.y);
+          duplicate.w = Math.max(duplicate.x + duplicate.w, box.x + box.w) - duplicate.x;
+          duplicate.h = Math.max(duplicate.y + duplicate.h, box.y + box.h) - duplicate.y;
+        } else {
+          unique.push(box);
+        }
+      }
+      return unique;
+    }
+
+    function overlapRatio(a, b) {
+      const left = Math.max(a.x, b.x);
+      const top = Math.max(a.y, b.y);
+      const right = Math.min(a.x + a.w, b.x + b.w);
+      const bottom = Math.min(a.y + a.h, b.y + b.h);
+      if (right <= left || bottom <= top) return 0;
+      const overlap = (right - left) * (bottom - top);
+      return overlap / Math.min(a.w * a.h, b.w * b.h);
+    }
+
+    function boxKey(box) {
+      return [Math.round(box.x / 8), Math.round(box.y / 8), Math.round(box.w / 8), Math.round(box.h / 8), box.type].join(":");
+    }
+
+    function normalizeText(text) {
+      return text.replace(/[　]/g, " ").replace(/[—–]/g, "-").trim();
+    }
+
+    function maskText(text) {
+      if (text.length <= 4) return text;
+      return text.slice(0, 2) + "..." + text.slice(-2);
+    }
+
+    function toggleManualMode() {
+      if (!state.image) return;
+      state.manualMode = !state.manualMode;
+      manualButton.classList.toggle("primary-button", state.manualMode);
+      manualButton.classList.toggle("ghost-button", !state.manualMode);
+      overlay.style.pointerEvents = state.manualMode ? "auto" : "none";
+      toastMessage(state.manualMode ? "拖动图片添加打码框" : "已关闭手动框选");
+    }
+
+    function startDrawing(event) {
+      if (!state.manualMode || !state.image || event.target !== overlay) return;
+      const point = getCanvasPoint(event);
+      state.drawing = { startX: point.x, startY: point.y, x: point.x, y: point.y, w: 0, h: 0 };
+      renderOverlay();
+      overlay.setPointerCapture(event.pointerId);
+    }
+
+    function updateDrawing(event) {
+      if (!state.drawing) return;
+      const point = getCanvasPoint(event);
+      state.drawing.x = Math.min(state.drawing.startX, point.x);
+      state.drawing.y = Math.min(state.drawing.startY, point.y);
+      state.drawing.w = Math.abs(point.x - state.drawing.startX);
+      state.drawing.h = Math.abs(point.y - state.drawing.startY);
+      renderOverlay();
+    }
+
+    function finishDrawing(event) {
+      if (!state.drawing) return;
+      const box = state.drawing;
+      state.drawing = null;
+      if (box.w > 8 && box.h > 8) {
+        state.boxes.push({ id: state.nextId++, x: Math.round(box.x), y: Math.round(box.y), w: Math.round(box.w), h: Math.round(box.h), type: "手动框选", text: "自定义区域" });
+        state.selectedId = state.boxes[state.boxes.length - 1].id;
+        state.applied = false;
+        toastMessage("已添加打码框");
+      }
+      overlay.releasePointerCapture(event.pointerId);
+      render();
+    }
+
+    function cancelDrawing() {
+      state.drawing = null;
+      renderOverlay();
+    }
+
+    function getCanvasPoint(event) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      return {
+        x: Math.max(0, Math.min(canvas.width, (event.clientX - rect.left) * scaleX)),
+        y: Math.max(0, Math.min(canvas.height, (event.clientY - rect.top) * scaleY))
+      };
+    }
+
+    function selectBox(id) {
+      state.selectedId = id;
+      renderOverlay();
+    }
+
+    function deleteBox(id) {
+      state.boxes = state.boxes.filter((box) => box.id !== id);
+      if (state.selectedId === id) state.selectedId = null;
+      state.applied = false;
+      if (state.image) redrawOriginal();
+      render();
+    }
+
+    function undoBox() {
+      if (!state.boxes.length) return;
+      state.boxes.pop();
+      state.selectedId = state.boxes.length ? state.boxes[state.boxes.length - 1].id : null;
+      state.applied = false;
+      if (state.image) redrawOriginal();
+      render();
+    }
+
+    function removeImage() {
+      state.image = null;
+      state.fileName = "privacy-screenshot";
+      state.boxes = [];
+      state.selectedId = null;
+      state.applied = false;
+      state.manualMode = false;
+      state.drawing = null;
+      canvas.width = 0;
+      canvas.height = 0;
+      fileInput.value = "";
+      dropzone.style.display = "grid";
+      dropzone.classList.remove("dragging");
+      canvasWrap.style.display = "none";
+      manualButton.classList.remove("primary-button");
+      manualButton.classList.add("ghost-button");
+      overlay.style.pointerEvents = "none";
+      setStatus("还没有上传图片。", 0);
+      render();
+      toastMessage("已删除图片");
+    }
+
+    function redrawOriginal() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(state.image, 0, 0);
+    }
+
+    function applyRedactions() {
+      if (!state.image || !state.boxes.length) return;
+      redrawOriginal();
+      for (const box of state.boxes) {
+        if (state.mode === "black") drawBlack(box);
+        if (state.mode === "blur") drawBlur(box);
+        if (state.mode === "mosaic") drawMosaic(box);
+      }
+      state.applied = true;
+      renderButtons();
+      toastMessage(`已打码 ${state.boxes.length} 处`);
+    }
+
+    function drawBlack(box) {
+      ctx.save();
+      ctx.fillStyle = "#111111";
+      ctx.fillRect(box.x, box.y, box.w, box.h);
+      ctx.restore();
+    }
+
+    function drawBlur(box) {
+      const temp = document.createElement("canvas");
+      temp.width = Math.max(1, box.w);
+      temp.height = Math.max(1, box.h);
+      const tempCtx = temp.getContext("2d");
+      tempCtx.filter = `blur(${Math.max(5, state.strength / 2)}px)`;
+      tempCtx.drawImage(canvas, box.x, box.y, box.w, box.h, 0, 0, box.w, box.h);
+      ctx.drawImage(temp, box.x, box.y);
+    }
+
+    function drawMosaic(box) {
+      const size = Math.max(4, state.strength);
+      const imageData = ctx.getImageData(box.x, box.y, box.w, box.h);
+      for (let y = 0; y < box.h; y += size) {
+        for (let x = 0; x < box.w; x += size) {
+          const sampleX = Math.min(box.w - 1, x + Math.floor(size / 2));
+          const sampleY = Math.min(box.h - 1, y + Math.floor(size / 2));
+          const index = (sampleY * box.w + sampleX) * 4;
+          ctx.fillStyle = `rgb(${imageData.data[index]}, ${imageData.data[index + 1]}, ${imageData.data[index + 2]})`;
+          ctx.fillRect(box.x + x, box.y + y, Math.min(size, box.w - x), Math.min(size, box.h - y));
+        }
+      }
+    }
+
+    function downloadImage() {
+      if (!state.image) return;
+      if (!state.applied && state.boxes.length) applyRedactions();
+      const link = document.createElement("a");
+      const date = new Date().toISOString().slice(0, 10);
+      link.download = `打码_${state.fileName}_${date}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+      toastMessage("PNG 已生成");
+    }
+
+    function render() {
+      syncOverlayScale();
+      renderOverlay();
+      renderResults();
+      renderButtons();
+    }
+
+    function syncOverlayScale() {
+      if (!state.image) return;
+      const rect = canvas.getBoundingClientRect();
+      state.scale = rect.width / canvas.width;
+      overlay.style.width = `${canvas.width}px`;
+      overlay.style.height = `${canvas.height}px`;
+      overlay.style.transform = `scale(${state.scale})`;
+    }
+
+    function renderOverlay() {
+      overlay.innerHTML = "";
+      for (const box of state.boxes) {
+        const element = document.createElement("div");
+        element.className = "redaction-box" + (box.id === state.selectedId ? " active" : "");
+        element.style.left = `${box.x}px`;
+        element.style.top = `${box.y}px`;
+        element.style.width = `${box.w}px`;
+        element.style.height = `${box.h}px`;
+        element.addEventListener("click", (event) => {
+          event.stopPropagation();
+          selectBox(box.id);
+        });
+        const label = document.createElement("div");
+        label.className = "box-label";
+        label.textContent = `${box.type} · ${box.text}`;
+        element.appendChild(label);
+        const closeButton = document.createElement("button");
+        closeButton.className = "box-close-button";
+        closeButton.type = "button";
+        closeButton.title = "删除这个框";
+        closeButton.setAttribute("aria-label", "删除这个框");
+        closeButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>';
+        closeButton.addEventListener("click", (event) => {
+          event.stopPropagation();
+          deleteBox(box.id);
+        });
+        element.appendChild(closeButton);
+        overlay.appendChild(element);
+      }
+
+      if (state.drawing) {
+        const element = document.createElement("div");
+        element.className = "drawing-box";
+        element.style.left = `${state.drawing.x}px`;
+        element.style.top = `${state.drawing.y}px`;
+        element.style.width = `${state.drawing.w}px`;
+        element.style.height = `${state.drawing.h}px`;
+        overlay.appendChild(element);
+      }
+    }
+
+    function renderResults() {
+      resultList.innerHTML = "";
+      if (!state.boxes.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.textContent = state.image ? "还没有打码框。点击“自动识别”或开启“手动框选”。" : "上传图片后，可以手动框选隐私区域，也可以用自动识别生成候选框。";
+        resultList.appendChild(empty);
+        return;
+      }
+
+      for (const box of state.boxes) {
+        const item = document.createElement("div");
+        item.className = "result-item";
+        item.addEventListener("click", () => selectBox(box.id));
+        item.innerHTML = `
+          <div class="result-main">
+            <div class="result-type">${escapeHtml(box.type)}</div>
+            <div class="result-text">${escapeHtml(box.text)}</div>
+          </div>
+          <button class="mini-button" aria-label="删除">${iconTrash}</button>
+        `;
+        item.querySelector("button").addEventListener("click", (event) => {
+          event.stopPropagation();
+          deleteBox(box.id);
+        });
+        resultList.appendChild(item);
+      }
+    }
+
+    function renderButtons() {
+      const hasImage = Boolean(state.image);
+      const hasBoxes = state.boxes.length > 0;
+      scanButton.disabled = !hasImage;
+      manualButton.disabled = !hasImage;
+      undoButton.disabled = !hasBoxes;
+      resetButton.disabled = !hasImage;
+      applyButton.disabled = !hasImage || !hasBoxes;
+      downloadButton.disabled = !hasImage;
+    }
+
+    function setStatus(message, progress) {
+      statusText.textContent = message;
+      progressBar.style.width = `${Math.max(0, Math.min(100, progress))}%`;
+    }
+
+    function toastMessage(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(toast.hideTimer);
+      toast.hideTimer = setTimeout(() => toast.classList.remove("show"), 1800);
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+  </script>
+</body>
+</html>
