@@ -412,17 +412,17 @@
 
     .box-close-button {
       position: absolute;
-      top: -15px;
-      right: -15px;
-      width: 30px;
-      height: 30px;
+      top: -14px;
+      right: -14px;
+      width: 28px;
+      height: 28px;
       display: grid;
       place-items: center;
       border-radius: 999px;
-      border: 1px solid rgba(22, 22, 22, .12);
-      background: rgba(255, 253, 248, .95);
-      color: var(--ink);
-      box-shadow: 0 10px 24px rgba(20, 18, 14, .18);
+      border: 1px solid rgba(146, 34, 53, .28);
+      background: #fffdf8;
+      color: #922235;
+      box-shadow: 0 6px 16px rgba(146, 34, 53, .14);
       backdrop-filter: blur(10px);
       opacity: 0;
       transform: scale(.92);
@@ -436,15 +436,15 @@
     }
 
     .box-close-button:hover {
-      background: #ffffff;
-      color: #922235;
+      background: #fff4f6;
+      border-color: rgba(146, 34, 53, .5);
     }
 
     .box-close-button svg {
-      width: 16px;
-      height: 16px;
+      width: 15px;
+      height: 15px;
       stroke: currentColor;
-      stroke-width: 2.2;
+      stroke-width: 2.6;
       fill: none;
       stroke-linecap: round;
       stroke-linejoin: round;
@@ -598,8 +598,8 @@
       height: 16px;
       margin-top: -4px;
       border-radius: 999px;
-      background: var(--accent);
-      border: 3px solid #fffdf8;
+      background: #fffdf8;
+      border: 3px solid var(--accent);
       box-shadow: none;
     }
 
@@ -619,9 +619,9 @@
     input[type="range"]::-moz-range-thumb {
       width: 16px;
       height: 16px;
-      border: 3px solid #fffdf8;
+      border: 3px solid var(--accent);
       border-radius: 999px;
-      background: var(--accent);
+      background: #fffdf8;
       box-shadow: none;
     }
 
@@ -1042,11 +1042,11 @@
         <section class="panel-section">
           <p class="section-title">预览导出</p>
           <div class="actions">
-            <button id="applyButton" class="primary-button full" disabled>
+            <button id="applyButton" class="ghost-button full" disabled>
               <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span>
               预览
             </button>
-            <button id="downloadButton" class="ghost-button full" disabled>
+            <button id="downloadButton" class="primary-button full" disabled>
               <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg></span>
               下载 PNG
             </button>
