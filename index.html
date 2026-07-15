@@ -586,6 +586,23 @@
       background: #ffffff;
     }
 
+    .color-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 44px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .color-input {
+      width: 44px;
+      height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fffaf0;
+      padding: 4px;
+      cursor: pointer;
+    }
+
     .actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -704,6 +721,69 @@
     .toast.show {
       opacity: 1;
       transform: translateX(-50%) translateY(0);
+    }
+
+    .preview-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      display: none;
+      place-items: center;
+      padding: 24px;
+      background: rgba(22, 22, 22, .62);
+      backdrop-filter: blur(12px);
+    }
+
+    .preview-modal.open {
+      display: grid;
+    }
+
+    .preview-dialog {
+      width: min(1120px, 96vw);
+      max-height: 92vh;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      background: var(--panel);
+      border: 1px solid rgba(255, 253, 248, .28);
+      border-radius: 8px;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, .34);
+      overflow: hidden;
+    }
+
+    .preview-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .preview-title {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .preview-body {
+      min-height: 0;
+      overflow: auto;
+      padding: 16px;
+      background:
+        linear-gradient(90deg, rgba(22, 22, 22, .04) 1px, transparent 1px),
+        linear-gradient(rgba(22, 22, 22, .04) 1px, transparent 1px),
+        #f3efe7;
+      background-size: 22px 22px;
+      display: grid;
+      place-items: center;
+    }
+
+    .preview-body img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      background: white;
+      box-shadow: 0 18px 48px rgba(20, 18, 14, .2);
     }
 
     @media (max-width: 980px) {
@@ -848,16 +928,45 @@
         </section>
 
         <section class="panel-section">
-          <p class="section-title">文字输入</p>
-          <div class="text-input-row">
-            <input id="textInput" class="text-input" type="text" placeholder="输入要加到图片上的文字" />
-            <button id="addTextButton" class="ghost-button" disabled>添加</button>
+          <p class="section-title">文字水印</p>
+          <div class="field">
+            <label for="watermarkText"><span>内容</span></label>
+            <input id="watermarkText" class="text-input" type="text" placeholder="输入平铺水印文字" />
           </div>
-          <div class="actions">
-            <button id="clearTextButton" class="ghost-button full" disabled>
-              <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M6 7l1 13h10l1-13"/><path d="M10 11v5"/><path d="M14 11v5"/></svg></span>
-              清空文字
-            </button>
+          <div class="field">
+            <label for="watermarkAngle">
+              <span>角度</span>
+              <span id="watermarkAngleValue">-24°</span>
+            </label>
+            <input id="watermarkAngle" type="range" min="-60" max="60" value="-24" />
+          </div>
+          <div class="field">
+            <label for="watermarkOpacity">
+              <span>透明度</span>
+              <span id="watermarkOpacityValue">22%</span>
+            </label>
+            <input id="watermarkOpacity" type="range" min="5" max="80" value="22" />
+          </div>
+          <div class="field">
+            <label for="watermarkSize">
+              <span>字号</span>
+              <span id="watermarkSizeValue">36</span>
+            </label>
+            <input id="watermarkSize" type="range" min="16" max="160" value="36" />
+          </div>
+          <div class="field">
+            <label for="watermarkGap">
+              <span>间距</span>
+              <span id="watermarkGapValue">180</span>
+            </label>
+            <input id="watermarkGap" type="range" min="80" max="420" value="180" />
+          </div>
+          <div class="field">
+            <label for="watermarkColor"><span>颜色</span></label>
+            <div class="color-row">
+              <input id="watermarkColorText" class="text-input" type="text" value="#111111" />
+              <input id="watermarkColor" class="color-input" type="color" value="#111111" />
+            </div>
           </div>
         </section>
 
@@ -893,6 +1002,20 @@
     </section>
   </main>
 
+  <div id="previewModal" class="preview-modal" aria-hidden="true">
+    <div class="preview-dialog" role="dialog" aria-modal="true" aria-label="预览图片">
+      <div class="preview-header">
+        <p class="preview-title">预览 PNG</p>
+        <button id="previewCloseButton" class="icon-button" title="关闭预览" aria-label="关闭预览">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="preview-body">
+        <img id="previewImage" alt="预览生成的图片" />
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script>
@@ -900,7 +1023,14 @@
       image: null,
       fileName: "privacy-screenshot",
       boxes: [],
-      textItems: [],
+      watermark: {
+        text: "",
+        angle: -24,
+        opacity: 22,
+        fontSize: 36,
+        color: "#111111",
+        gap: 180
+      },
       selectedId: null,
       mode: "mosaic",
       strength: 16,
@@ -909,8 +1039,7 @@
       editing: null,
       applied: false,
       scale: 1,
-      nextId: 1,
-      nextTextId: 1
+      nextId: 1
     };
 
     const fileInput = document.getElementById("fileInput");
@@ -920,9 +1049,20 @@
     const resetButton = document.getElementById("resetButton");
     const applyButton = document.getElementById("applyButton");
     const downloadButton = document.getElementById("downloadButton");
-    const textInput = document.getElementById("textInput");
-    const addTextButton = document.getElementById("addTextButton");
-    const clearTextButton = document.getElementById("clearTextButton");
+    const watermarkText = document.getElementById("watermarkText");
+    const watermarkAngle = document.getElementById("watermarkAngle");
+    const watermarkAngleValue = document.getElementById("watermarkAngleValue");
+    const watermarkOpacity = document.getElementById("watermarkOpacity");
+    const watermarkOpacityValue = document.getElementById("watermarkOpacityValue");
+    const watermarkSize = document.getElementById("watermarkSize");
+    const watermarkSizeValue = document.getElementById("watermarkSizeValue");
+    const watermarkGap = document.getElementById("watermarkGap");
+    const watermarkGapValue = document.getElementById("watermarkGapValue");
+    const watermarkColor = document.getElementById("watermarkColor");
+    const watermarkColorText = document.getElementById("watermarkColorText");
+    const previewModal = document.getElementById("previewModal");
+    const previewImageEl = document.getElementById("previewImage");
+    const previewCloseButton = document.getElementById("previewCloseButton");
     const imageCloseButton = document.getElementById("imageCloseButton");
     const strengthRange = document.getElementById("strengthRange");
     const strengthValue = document.getElementById("strengthValue");
@@ -989,14 +1129,30 @@
     manualButton.addEventListener("click", toggleManualMode);
     undoButton.addEventListener("click", undoBox);
     resetButton.addEventListener("click", removeImage);
-    applyButton.addEventListener("click", previewImage);
+    applyButton.addEventListener("click", openPreviewImage);
     downloadButton.addEventListener("click", downloadImage);
-    addTextButton.addEventListener("click", addTextItem);
-    clearTextButton.addEventListener("click", clearTextItems);
-    textInput.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") addTextItem();
+    watermarkText.addEventListener("input", updateWatermarkFromControls);
+    watermarkAngle.addEventListener("input", updateWatermarkFromControls);
+    watermarkOpacity.addEventListener("input", updateWatermarkFromControls);
+    watermarkSize.addEventListener("input", updateWatermarkFromControls);
+    watermarkGap.addEventListener("input", updateWatermarkFromControls);
+    watermarkColor.addEventListener("input", () => {
+      watermarkColorText.value = watermarkColor.value;
+      updateWatermarkFromControls();
     });
-    textInput.addEventListener("input", renderButtons);
+    watermarkColorText.addEventListener("input", () => {
+      if (/^#[0-9a-fA-F]{6}$/.test(watermarkColorText.value.trim())) {
+        watermarkColor.value = watermarkColorText.value.trim();
+      }
+      updateWatermarkFromControls();
+    });
+    previewCloseButton.addEventListener("click", closePreviewModal);
+    previewModal.addEventListener("click", (event) => {
+      if (event.target === previewModal) closePreviewModal();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closePreviewModal();
+    });
     imageCloseButton.addEventListener("click", removeImage);
     window.addEventListener("resize", syncOverlayScale);
 
@@ -1016,11 +1172,11 @@
           state.image = image;
           state.fileName = file.name.replace(/\.[^.]+$/, "") || "privacy-screenshot";
           state.boxes = [];
-          state.textItems = [];
+          state.watermark.text = "";
+          watermarkText.value = "";
           state.selectedId = null;
           state.applied = false;
           state.nextId = 1;
-          state.nextTextId = 1;
           canvas.width = image.naturalWidth;
           canvas.height = image.naturalHeight;
           ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1352,7 +1508,7 @@
       state.image = null;
       state.fileName = "privacy-screenshot";
       state.boxes = [];
-      state.textItems = [];
+      state.watermark.text = "";
       state.selectedId = null;
       state.applied = false;
       state.manualMode = false;
@@ -1361,7 +1517,8 @@
       canvas.width = 0;
       canvas.height = 0;
       fileInput.value = "";
-      textInput.value = "";
+      watermarkText.value = "";
+      closePreviewModal();
       dropzone.style.display = "grid";
       dropzone.classList.remove("dragging");
       canvasWrap.style.display = "none";
@@ -1378,10 +1535,12 @@
       ctx.drawImage(state.image, 0, 0);
     }
 
-    function previewImage() {
+    function openPreviewImage() {
       if (!state.image) return;
       renderCanvasPreview();
-      toastMessage(state.boxes.length || state.textItems.length ? "预览已更新" : "暂无打码框或文字");
+      previewImageEl.src = canvas.toDataURL("image/png");
+      previewModal.classList.add("open");
+      previewModal.setAttribute("aria-hidden", "false");
     }
 
     function renderCanvasPreview() {
@@ -1392,8 +1551,8 @@
         if (state.mode === "blur") drawBlur(box);
         if (state.mode === "mosaic") drawMosaic(box);
       }
-      drawTextItems();
-      state.applied = state.boxes.length > 0 || state.textItems.length > 0;
+      drawWatermark();
+      state.applied = state.boxes.length > 0 || Boolean(state.watermark.text.trim());
       renderButtons();
     }
 
@@ -1428,71 +1587,47 @@
       }
     }
 
-    function addTextItem() {
-      if (!state.image) return;
-      const value = textInput.value.trim();
-      if (!value) return;
-      const fontSize = Math.max(24, Math.round(canvas.width * .032));
-      const padding = Math.max(16, Math.round(canvas.width * .018));
-      const yOffset = state.textItems.length * (fontSize + padding);
-      state.textItems.push({
-        id: state.nextTextId++,
-        text: value,
-        x: padding,
-        y: padding + fontSize + yOffset,
-        fontSize
-      });
-      textInput.value = "";
-      render();
-      toastMessage("已添加文字");
+    function updateWatermarkFromControls() {
+      state.watermark.text = watermarkText.value;
+      state.watermark.angle = Number(watermarkAngle.value);
+      state.watermark.opacity = Number(watermarkOpacity.value);
+      state.watermark.fontSize = Number(watermarkSize.value);
+      state.watermark.gap = Number(watermarkGap.value);
+      state.watermark.color = /^#[0-9a-fA-F]{6}$/.test(watermarkColorText.value.trim()) ? watermarkColorText.value.trim() : watermarkColor.value;
+      watermarkAngleValue.textContent = `${state.watermark.angle}°`;
+      watermarkOpacityValue.textContent = `${state.watermark.opacity}%`;
+      watermarkSizeValue.textContent = String(state.watermark.fontSize);
+      watermarkGapValue.textContent = String(state.watermark.gap);
+      renderCanvasPreview();
+      renderButtons();
     }
 
-    function clearTextItems() {
-      if (!state.textItems.length) return;
-      state.textItems = [];
-      render();
-      toastMessage("已清空文字");
-    }
-
-    function drawTextItems() {
-      if (!state.textItems.length) return;
+    function drawWatermark() {
+      const text = state.watermark.text.trim();
+      if (!text) return;
+      const angle = state.watermark.angle * Math.PI / 180;
+      const gap = Math.max(40, state.watermark.gap);
+      const bound = Math.hypot(canvas.width, canvas.height);
       ctx.save();
-      ctx.textBaseline = "alphabetic";
-      ctx.lineJoin = "round";
-      for (const item of state.textItems) {
-        ctx.font = `700 ${item.fontSize}px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
-        const metrics = ctx.measureText(item.text);
-        const padX = Math.round(item.fontSize * .48);
-        const padY = Math.round(item.fontSize * .34);
-        const boxX = item.x - padX;
-        const boxY = item.y - item.fontSize - padY;
-        const boxW = metrics.width + padX * 2;
-        const boxH = item.fontSize + padY * 2;
-        ctx.fillStyle = "rgba(22, 22, 22, .78)";
-        roundRect(ctx, boxX, boxY, boxW, boxH, Math.max(8, Math.round(item.fontSize * .25)));
-        ctx.fill();
-        ctx.strokeStyle = "rgba(255, 253, 248, .72)";
-        ctx.lineWidth = Math.max(3, Math.round(item.fontSize * .08));
-        ctx.strokeText(item.text, item.x, item.y);
-        ctx.fillStyle = "#fffdf8";
-        ctx.fillText(item.text, item.x, item.y);
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate(angle);
+      ctx.globalAlpha = Math.max(0, Math.min(1, state.watermark.opacity / 100));
+      ctx.fillStyle = state.watermark.color;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = `700 ${state.watermark.fontSize}px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+      for (let y = -bound; y <= bound; y += gap) {
+        for (let x = -bound; x <= bound; x += gap * 1.8) {
+          ctx.fillText(text, x, y);
+        }
       }
       ctx.restore();
     }
 
-    function roundRect(context, x, y, width, height, radius) {
-      const r = Math.min(radius, width / 2, height / 2);
-      context.beginPath();
-      context.moveTo(x + r, y);
-      context.lineTo(x + width - r, y);
-      context.quadraticCurveTo(x + width, y, x + width, y + r);
-      context.lineTo(x + width, y + height - r);
-      context.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
-      context.lineTo(x + r, y + height);
-      context.quadraticCurveTo(x, y + height, x, y + height - r);
-      context.lineTo(x, y + r);
-      context.quadraticCurveTo(x, y, x + r, y);
-      context.closePath();
+    function closePreviewModal() {
+      previewModal.classList.remove("open");
+      previewModal.setAttribute("aria-hidden", "true");
+      previewImageEl.removeAttribute("src");
     }
 
     function downloadImage() {
@@ -1625,15 +1760,12 @@
     function renderButtons() {
       const hasImage = Boolean(state.image);
       const hasBoxes = state.boxes.length > 0;
-      const hasText = state.textItems.length > 0;
       scanButton.disabled = !hasImage;
       manualButton.disabled = !hasImage;
       undoButton.disabled = !hasBoxes;
       resetButton.disabled = !hasImage;
       applyButton.disabled = !hasImage;
       downloadButton.disabled = !hasImage;
-      addTextButton.disabled = !hasImage || !textInput.value.trim();
-      clearTextButton.disabled = !hasText;
     }
 
     function setStatus(message, progress) {
