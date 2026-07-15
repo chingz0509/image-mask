@@ -580,24 +580,48 @@
       width: 100%;
       height: 18px;
       cursor: pointer;
+      appearance: none;
+      background: transparent;
+      --range-progress: 50%;
     }
 
     input[type="range"]::-webkit-slider-runnable-track {
-      height: 6px;
+      height: 8px;
       border-radius: 999px;
-      background: #e1dacd;
+      background: linear-gradient(90deg, var(--accent) 0 var(--range-progress), #e8e0d2 var(--range-progress) 100%);
       border: 0;
     }
 
     input[type="range"]::-webkit-slider-thumb {
       appearance: none;
-      width: 13px;
-      height: 13px;
-      margin-top: -3.5px;
+      width: 18px;
+      height: 18px;
+      margin-top: -5px;
+      border-radius: 999px;
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+    }
+
+    input[type="range"]::-moz-range-track {
+      height: 8px;
+      border-radius: 999px;
+      background: #e8e0d2;
+      border: 0;
+    }
+
+    input[type="range"]::-moz-range-progress {
+      height: 8px;
       border-radius: 999px;
       background: var(--accent);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
       border: 0;
-      box-shadow: 0 3px 8px rgba(15, 118, 110, .24);
+      border-radius: 999px;
+      background: transparent;
     }
 
     .text-input-row {
@@ -1155,6 +1179,11 @@
       if (file && file.type.startsWith("image/")) loadFile(file);
     });
 
+    document.querySelectorAll('input[type="range"]').forEach((range) => {
+      updateRangeProgress(range);
+      range.addEventListener("input", () => updateRangeProgress(range));
+    });
+
     document.querySelectorAll("[data-mode]").forEach((button) => {
       button.addEventListener("click", () => {
         state.mode = button.dataset.mode;
@@ -1207,6 +1236,14 @@
     document.addEventListener("pointermove", updateBoxEdit);
     document.addEventListener("pointerup", finishBoxEdit);
     document.addEventListener("pointercancel", finishBoxEdit);
+
+    function updateRangeProgress(range) {
+      const min = Number(range.min || 0);
+      const max = Number(range.max || 100);
+      const value = Number(range.value || 0);
+      const percent = max === min ? 0 : ((value - min) / (max - min)) * 100;
+      range.style.setProperty("--range-progress", `${Math.max(0, Math.min(100, percent))}%`);
+    }
 
     function loadFile(file) {
       const reader = new FileReader();
