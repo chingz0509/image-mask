@@ -490,15 +490,18 @@
     }
 
     .side {
-      padding: 14px;
+      padding: 16px;
       align-self: start;
       max-height: calc(100vh - 96px);
       overflow: auto;
+      background:
+        linear-gradient(180deg, rgba(255, 253, 248, .94), rgba(250, 246, 238, .9)),
+        var(--panel);
     }
 
     .panel-section {
-      padding: 14px 0;
-      border-bottom: 1px solid var(--line);
+      padding: 16px 0;
+      border-bottom: 1px solid rgba(222, 216, 205, .86);
     }
 
     .panel-section:first-child {
@@ -512,25 +515,38 @@
 
     .section-title {
       margin: 0 0 10px;
-      font-size: 13px;
-      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 12px;
+      color: #554f46;
       font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: .08em;
+      letter-spacing: .06em;
+    }
+
+    .section-title::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(15, 118, 110, .1);
     }
 
     .segmented {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 6px;
-      background: #eee7da;
-      padding: 5px;
+      gap: 4px;
+      background: #ebe4d8;
+      padding: 4px;
       border-radius: 8px;
-      border: 1px solid var(--line);
+      border: 1px solid rgba(200, 191, 177, .85);
+      box-shadow: inset 0 1px 2px rgba(44, 36, 21, .06);
     }
 
     .segmented button {
-      height: 36px;
+      height: 34px;
       border-radius: 6px;
       background: transparent;
       color: var(--muted);
@@ -541,13 +557,13 @@
     .segmented button.active {
       background: var(--panel);
       color: var(--ink);
-      box-shadow: 0 5px 14px rgba(44, 36, 21, .1);
+      box-shadow: 0 6px 16px rgba(44, 36, 21, .12);
     }
 
     .field {
       display: grid;
-      gap: 8px;
-      margin-top: 12px;
+      gap: 7px;
+      margin-top: 14px;
     }
 
     .field label {
@@ -555,13 +571,33 @@
       justify-content: space-between;
       gap: 10px;
       color: var(--muted);
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 650;
     }
 
     input[type="range"] {
       accent-color: var(--accent);
       width: 100%;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 6px;
+      border-radius: 999px;
+      background: #e1dacd;
+      border: 1px solid rgba(200, 191, 177, .8);
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      width: 17px;
+      height: 17px;
+      margin-top: -6px;
+      border-radius: 999px;
+      background: var(--accent);
+      border: 2px solid #fffdf8;
+      box-shadow: 0 3px 9px rgba(15, 118, 110, .28);
     }
 
     .text-input-row {
@@ -573,13 +609,14 @@
 
     .text-input {
       width: 100%;
-      height: 38px;
-      border: 1px solid var(--line);
+      height: 40px;
+      border: 1px solid rgba(200, 191, 177, .86);
       border-radius: 7px;
-      background: #fffaf0;
+      background: rgba(255, 253, 248, .88);
       color: var(--ink);
-      padding: 0 11px;
+      padding: 0 12px;
       outline: none;
+      box-shadow: inset 0 1px 2px rgba(44, 36, 21, .04);
     }
 
     .text-input:focus {
@@ -597,10 +634,10 @@
 
     .color-input {
       width: 44px;
-      height: 38px;
-      border: 1px solid var(--line);
+      height: 40px;
+      border: 1px solid rgba(200, 191, 177, .86);
       border-radius: 7px;
-      background: #fffaf0;
+      background: rgba(255, 253, 248, .88);
       padding: 4px;
       cursor: pointer;
     }
@@ -609,6 +646,11 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
+    }
+
+    .actions .primary-button,
+    .actions .ghost-button {
+      min-height: 42px;
     }
 
     .actions .primary-button,
@@ -896,7 +938,7 @@
           <div id="dropzone" class="dropzone">
             <div>
               <div class="drop-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v13a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 18.5v-13z"/><path d="M8 15l2.4-2.4a1.4 1.4 0 0 1 2 0L16 16"/><path d="M14 13l1.2-1.2a1.3 1.3 0 0 1 1.8 0L20 14.8"/><path d="M12 10V5.5"/><path d="M9.8 7.7L12 5.5l2.2 2.2"/><circle cx="8.5" cy="8.5" r="1"/></svg>
+                <svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v13a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 18.5v-13z"/><path d="M7.5 16l3.1-3.1a1.4 1.4 0 0 1 2 0L16 16.3"/><path d="M14 14.2l1.2-1.2a1.3 1.3 0 0 1 1.8 0l3 3"/><circle cx="8.5" cy="8.5" r="1.2"/></svg>
               </div>
               <h2 class="drop-title">拖入截图，马上打码</h2>
               <p class="drop-copy">适合聊天记录、订单页、表格截图和客服沟通图。先手动框选也能直接用，自动识别会尝试找出手机号、邮箱、身份证和银行卡。</p>
