@@ -1213,7 +1213,8 @@
       reader.onload = () => {
         const image = new Image();
         image.onload = () => {
-          state.image = image;
+          const preparedImage = trimTransparentPadding(image);
+          state.image = preparedImage;
           state.fileName = file.name.replace(/\.[^.]+$/, "") || "privacy-screenshot";
           state.boxes = [];
           state.watermark.text = "";
@@ -1221,19 +1222,58 @@
           state.selectedId = null;
           state.applied = false;
           state.nextId = 1;
-          canvas.width = image.naturalWidth;
-          canvas.height = image.naturalHeight;
+          canvas.width = preparedImage.naturalWidth || preparedImage.width;
+          canvas.height = preparedImage.naturalHeight || preparedImage.height;
           ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(image, 0, 0);
+          ctx.drawImage(preparedImage, 0, 0);
           dropzone.style.display = "none";
           canvasWrap.style.display = "block";
           setStatus("图片已载入。可以手动框选，或点击自动识别。", 0);
           render();
-          toastMessage("图片已载入");
+          toastMessage(preparedImage !== image ? "图片已载入，已裁掉透明边缘" : "图片已载入");
         };
         image.src = reader.result;
       };
       reader.readAsDataURL(file);
+    }
+
+    function trimTransparentPadding(image) {
+      const width = image.naturalWidth || image.width;
+      const height = image.naturalHeight || image.height;
+      const tempCanvas = document.createElement("canvas");
+      tempCanvas.width = width;
+      tempCanvas.height = height;
+      const tempCtx = tempCanvas.getContext("2d", { willReadFrequently: true });
+      tempCtx.drawImage(image, 0, 0);
+      const pixels = tempCtx.getImageData(0, 0, width, height).data;
+      let minX = width;
+      let minY = height;
+      let maxX = -1;
+      let maxY = -1;
+
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const alpha = pixels[(y * width + x) * 4 + 3];
+          if (alpha > 8) {
+            if (x < minX) minX = x;
+            if (y < minY) minY = y;
+            if (x > maxX) maxX = x;
+            if (y > maxY) maxY = y;
+          }
+        }
+      }
+
+      if (maxX < minX || maxY < minY) return image;
+      const cropWidth = maxX - minX + 1;
+      const cropHeight = maxY - minY + 1;
+      const almostSameSize = cropWidth >= width - 2 && cropHeight >= height - 2;
+      if (almostSameSize) return image;
+
+      const croppedCanvas = document.createElement("canvas");
+      croppedCanvas.width = cropWidth;
+      croppedCanvas.height = cropHeight;
+      croppedCanvas.getContext("2d").drawImage(tempCanvas, minX, minY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+      return croppedCanvas;
     }
 
     async function runOcr() {
