@@ -412,20 +412,21 @@
 
     .box-close-button {
       position: absolute;
-      top: -13px;
-      right: -13px;
-      width: 26px;
-      height: 26px;
+      top: -15px;
+      right: -15px;
+      width: 30px;
+      height: 30px;
       display: grid;
       place-items: center;
       border-radius: 999px;
-      border: 1px solid rgba(209, 73, 91, .3);
-      background: rgba(255, 253, 248, .96);
-      color: #922235;
-      box-shadow: 0 8px 18px rgba(20, 18, 14, .16);
+      border: 1px solid rgba(22, 22, 22, .12);
+      background: rgba(255, 253, 248, .95);
+      color: var(--ink);
+      box-shadow: 0 10px 24px rgba(20, 18, 14, .18);
+      backdrop-filter: blur(10px);
       opacity: 0;
       transform: scale(.92);
-      transition: opacity .16s ease, transform .16s ease, background .16s ease;
+      transition: opacity .16s ease, transform .16s ease, background .16s ease, color .16s ease;
     }
 
     .redaction-box:hover .box-close-button,
@@ -436,13 +437,14 @@
 
     .box-close-button:hover {
       background: #ffffff;
+      color: #922235;
     }
 
     .box-close-button svg {
-      width: 14px;
-      height: 14px;
+      width: 16px;
+      height: 16px;
       stroke: currentColor;
-      stroke-width: 2.4;
+      stroke-width: 2.2;
       fill: none;
       stroke-linecap: round;
       stroke-linejoin: round;
@@ -974,7 +976,7 @@
           <p class="section-title">预览导出</p>
           <div class="actions">
             <button id="applyButton" class="primary-button full" disabled>
-              <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 3h18v18H3z"/><path d="M8 8h8v8H8z"/></svg></span>
+              <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span>
               预览
             </button>
             <button id="downloadButton" class="ghost-button full" disabled>
