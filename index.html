@@ -505,42 +505,6 @@
         var(--panel);
     }
 
-    .mobile-drawer-bar {
-      display: none;
-    }
-
-    .mobile-drawer-toggle {
-      min-width: 0;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--ink);
-      background: transparent;
-      font-weight: 800;
-      text-align: left;
-    }
-
-    .mobile-drawer-toggle svg {
-      width: 16px;
-      height: 16px;
-      stroke: currentColor;
-      stroke-width: 2.2;
-      fill: none;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      transition: transform .18s ease;
-    }
-
-    .mobile-drawer-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .mobile-drawer-actions .icon-button {
-      background: #fffaf0;
-    }
-
     .panel-section {
       padding: 16px 0;
       border-bottom: 1px solid rgba(222, 216, 205, .86);
@@ -929,16 +893,46 @@
 
       .topbar {
         position: relative;
+        gap: 10px;
+        padding: 10px 12px;
+      }
+
+      .brand {
+        gap: 9px;
+        min-width: 0;
+      }
+
+      .mark {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+      }
+
+      .brand h1 {
+        font-size: 18px;
+        line-height: 1.15;
+      }
+
+      .tagline {
+        margin-top: 2px;
+        font-size: 12px;
+        line-height: 1.3;
+      }
+
+      .privacy-note {
+        width: fit-content;
+        padding: 5px 9px;
+        gap: 6px;
+        font-size: 11px;
       }
 
       .workspace {
         display: block;
-        padding: 10px 10px 80px;
+        padding: 10px;
       }
 
       .stage-shell {
-        height: calc(100dvh - 146px);
-        min-height: 440px;
+        min-height: 0;
       }
 
       .stage-toolbar {
@@ -978,72 +972,38 @@
 
       .stage {
         padding: 10px;
+        place-items: start center;
+        overflow: hidden;
+        touch-action: none;
       }
 
       .canvas-wrap {
         max-width: 100%;
+        transform-origin: top left;
+        will-change: transform;
       }
 
       .dropzone {
         width: 100%;
-        min-height: 310px;
-        padding: 24px 16px;
+        min-height: 260px;
+        padding: 22px 16px;
       }
 
       .side {
-        position: fixed;
-        left: 10px;
-        right: 10px;
-        bottom: max(10px, env(safe-area-inset-bottom));
-        z-index: 45;
-        max-height: min(58dvh, 560px);
-        padding: 0 14px 14px;
-        border-radius: 12px;
+        margin-top: 10px;
+        padding: 14px;
+        max-height: none;
         overflow: auto;
-        box-shadow: 0 18px 60px rgba(20, 18, 14, .22);
-        transition: transform .22s ease, max-height .22s ease;
-        overscroll-behavior: contain;
-      }
-
-      .side.drawer-collapsed {
-        transform: translateY(calc(100% - 56px));
-        overflow: hidden;
-      }
-
-      .mobile-drawer-bar {
-        position: sticky;
-        top: 0;
-        z-index: 2;
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        align-items: center;
-        gap: 10px;
-        min-height: 56px;
-        padding: 10px 0;
-        background:
-          linear-gradient(180deg, rgba(255, 253, 248, .98), rgba(255, 253, 248, .92)),
-          var(--panel);
-        border-bottom: 1px solid rgba(222, 216, 205, .86);
-      }
-
-      .mobile-drawer-bar::before {
-        content: "";
-        position: absolute;
-        top: 6px;
-        left: 50%;
-        width: 38px;
-        height: 4px;
-        border-radius: 999px;
-        background: #d8d0c2;
-        transform: translateX(-50%);
-      }
-
-      .side.drawer-collapsed .mobile-drawer-toggle svg {
-        transform: rotate(180deg);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
       }
 
       .panel-section:first-of-type {
-        padding-top: 14px;
+        padding-top: 0;
+      }
+
+      .panel-section {
+        padding: 14px 0;
       }
 
       .actions {
@@ -1148,22 +1108,8 @@
         </div>
       </div>
 
-      <aside id="controlPanel" class="side drawer-collapsed" aria-label="控制面板">
-        <div class="mobile-drawer-bar">
-          <button id="mobileDrawerToggle" class="mobile-drawer-toggle" type="button" aria-expanded="false" aria-controls="controlPanel">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>
-            <span>操作面板</span>
-          </button>
-          <div class="mobile-drawer-actions">
-            <button id="mobilePreviewButton" class="icon-button" title="预览" aria-label="预览" disabled>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
-            </button>
-            <button id="mobileDownloadButton" class="icon-button" title="下载 PNG" aria-label="下载 PNG" disabled>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
-            </button>
-          </div>
-        </div>
-        <section class="panel-section">
+      <aside id="controlPanel" class="side" aria-label="控制面板">
+        <section class="panel-section mobile-redact">
           <p class="section-title">打码方式</p>
           <div class="segmented" role="group" aria-label="选择打码方式">
             <button class="active" data-mode="mosaic">马赛克</button>
@@ -1179,7 +1125,7 @@
           </div>
         </section>
 
-        <section class="panel-section">
+        <section class="panel-section mobile-watermark">
           <p class="section-title">文字水印</p>
           <div class="field">
             <label for="watermarkText"><span>内容</span></label>
@@ -1222,7 +1168,7 @@
           </div>
         </section>
 
-        <section class="panel-section">
+        <section class="panel-section mobile-export">
           <p class="section-title">预览导出</p>
           <div class="actions">
             <button id="applyButton" class="ghost-button full" disabled>
@@ -1236,7 +1182,7 @@
           </div>
         </section>
 
-        <section class="panel-section">
+        <section class="panel-section mobile-redact">
           <p class="section-title">识别状态</p>
           <div class="status">
             <div id="statusText">还没有上传图片。</div>
@@ -1244,7 +1190,7 @@
           </div>
         </section>
 
-        <section class="panel-section">
+        <section class="panel-section mobile-redact">
           <p class="section-title">检测结果</p>
           <div id="resultList" class="result-list">
             <div class="empty">上传图片后，可以手动框选隐私区域，也可以用自动识别生成候选框。</div>
@@ -1273,7 +1219,7 @@
   <script>
     const state = {
       image: null,
-      fileName: "privacy-screenshot",
+      fileName: "隐私截图",
       boxes: [],
       watermark: {
         text: "",
@@ -1291,6 +1237,9 @@
       editing: null,
       applied: false,
       scale: 1,
+      viewZoom: 1,
+      viewPanX: 0,
+      viewPanY: 0,
       nextId: 1
     };
 
@@ -1302,9 +1251,6 @@
     const applyButton = document.getElementById("applyButton");
     const downloadButton = document.getElementById("downloadButton");
     const controlPanel = document.getElementById("controlPanel");
-    const mobileDrawerToggle = document.getElementById("mobileDrawerToggle");
-    const mobilePreviewButton = document.getElementById("mobilePreviewButton");
-    const mobileDownloadButton = document.getElementById("mobileDownloadButton");
     const watermarkText = document.getElementById("watermarkText");
     const watermarkAngle = document.getElementById("watermarkAngle");
     const watermarkAngleValue = document.getElementById("watermarkAngleValue");
@@ -1332,6 +1278,9 @@
     const progressBar = document.getElementById("progressBar");
     const resultList = document.getElementById("resultList");
     const toast = document.getElementById("toast");
+    const mobileViewport = window.matchMedia("(max-width: 720px)");
+    const stagePointers = new Map();
+    let stageGesture = null;
 
     const iconTrash = '<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>';
 
@@ -1392,11 +1341,6 @@
     resetButton.addEventListener("click", removeImage);
     applyButton.addEventListener("click", openPreviewImage);
     downloadButton.addEventListener("click", downloadImage);
-    mobileDrawerToggle.addEventListener("click", () => {
-      setDrawerExpanded(controlPanel.classList.contains("drawer-collapsed"));
-    });
-    mobilePreviewButton.addEventListener("click", openPreviewImage);
-    mobileDownloadButton.addEventListener("click", downloadImage);
     watermarkText.addEventListener("input", updateWatermarkFromControls);
     watermarkAngle.addEventListener("input", updateWatermarkFromControls);
     watermarkOpacity.addEventListener("input", updateWatermarkFromControls);
@@ -1420,12 +1364,115 @@
       if (event.key === "Escape") closePreviewModal();
     });
     imageCloseButton.addEventListener("click", removeImage);
-    window.addEventListener("resize", syncOverlayScale);
+    stage.addEventListener("pointerdown", startStageGesture);
+    stage.addEventListener("pointermove", updateStageGesture);
+    stage.addEventListener("pointerup", finishStageGesture);
+    stage.addEventListener("pointercancel", finishStageGesture);
+    window.addEventListener("resize", () => {
+      if (!mobileViewport.matches) resetImageView();
+      syncOverlayScale();
+    });
 
-    function setDrawerExpanded(expanded) {
-      controlPanel.classList.toggle("drawer-collapsed", !expanded);
-      mobileDrawerToggle.setAttribute("aria-expanded", String(expanded));
-      mobileDrawerToggle.querySelector("span").textContent = expanded ? "收起面板" : "操作面板";
+    function startStageGesture(event) {
+      if (!canUseStageGesture(event)) return;
+      event.preventDefault();
+      stagePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      stage.setPointerCapture(event.pointerId);
+      if (stagePointers.size === 1) {
+        stageGesture = {
+          type: "pan",
+          pointerId: event.pointerId,
+          startX: event.clientX,
+          startY: event.clientY,
+          panX: state.viewPanX,
+          panY: state.viewPanY
+        };
+      } else if (stagePointers.size >= 2) {
+        const points = getStageGesturePoints();
+        stageGesture = {
+          type: "pinch",
+          startDistance: getPointDistance(points[0], points[1]),
+          startCenter: getPointCenter(points[0], points[1]),
+          startZoom: state.viewZoom,
+          panX: state.viewPanX,
+          panY: state.viewPanY
+        };
+      }
+    }
+
+    function updateStageGesture(event) {
+      if (!stagePointers.has(event.pointerId) || !stageGesture) return;
+      event.preventDefault();
+      stagePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+      if (stageGesture.type === "pinch" && stagePointers.size >= 2) {
+        const points = getStageGesturePoints();
+        const distance = getPointDistance(points[0], points[1]);
+        const center = getPointCenter(points[0], points[1]);
+        const nextZoom = clamp(stageGesture.startZoom * (distance / Math.max(1, stageGesture.startDistance)), 1, 3);
+        state.viewZoom = nextZoom;
+        state.viewPanX = stageGesture.panX + center.x - stageGesture.startCenter.x;
+        state.viewPanY = stageGesture.panY + center.y - stageGesture.startCenter.y;
+      } else if (stageGesture.type === "pan" && stagePointers.size === 1) {
+        state.viewPanX = stageGesture.panX + event.clientX - stageGesture.startX;
+        state.viewPanY = stageGesture.panY + event.clientY - stageGesture.startY;
+      }
+
+      applyImageViewTransform();
+      syncOverlayScale();
+    }
+
+    function finishStageGesture(event) {
+      if (stagePointers.has(event.pointerId)) {
+        stagePointers.delete(event.pointerId);
+        if (stage.hasPointerCapture(event.pointerId)) stage.releasePointerCapture(event.pointerId);
+      }
+      if (!stagePointers.size) {
+        stageGesture = null;
+        return;
+      }
+      const point = getStageGesturePoints()[0];
+      stageGesture = {
+        type: "pan",
+        pointerId: Number(stagePointers.keys().next().value),
+        startX: point.x,
+        startY: point.y,
+        panX: state.viewPanX,
+        panY: state.viewPanY
+      };
+    }
+
+    function canUseStageGesture(event) {
+      if (!mobileViewport.matches || !state.image || state.manualMode) return false;
+      if (event.button !== undefined && event.button > 0) return false;
+      return Boolean(event.target.closest(".stage")) && !event.target.closest(".redaction-box, .resize-handle, .box-close-button, .image-close-button, .dropzone");
+    }
+
+    function getStageGesturePoints() {
+      return Array.from(stagePointers.values());
+    }
+
+    function getPointDistance(a, b) {
+      return Math.hypot(a.x - b.x, a.y - b.y);
+    }
+
+    function getPointCenter(a, b) {
+      return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    }
+
+    function resetImageView() {
+      state.viewZoom = 1;
+      state.viewPanX = 0;
+      state.viewPanY = 0;
+      applyImageViewTransform();
+    }
+
+    function applyImageViewTransform() {
+      if (!state.image || !mobileViewport.matches) {
+        canvasWrap.style.transform = "";
+        return;
+      }
+      canvasWrap.style.transform = `translate(${state.viewPanX}px, ${state.viewPanY}px) scale(${state.viewZoom})`;
     }
 
     overlay.addEventListener("pointerdown", startDrawing);
@@ -1451,7 +1498,7 @@
         image.onload = () => {
           const preparedImage = trimTransparentPadding(image);
           state.image = preparedImage;
-          state.fileName = file.name.replace(/\.[^.]+$/, "") || "privacy-screenshot";
+          state.fileName = file.name.replace(/\.[^.]+$/, "") || "隐私截图";
           state.boxes = [];
           state.watermark.text = "";
           watermarkText.value = "";
@@ -1464,6 +1511,7 @@
           ctx.drawImage(preparedImage, 0, 0);
           dropzone.style.display = "none";
           canvasWrap.style.display = "block";
+          resetImageView();
           setStatus("图片已载入。可以手动框选，或点击自动识别。", 0);
           render();
           toastMessage(preparedImage !== image ? "图片已载入，已裁掉透明边缘" : "图片已载入");
@@ -1826,7 +1874,7 @@
 
     function removeImage() {
       state.image = null;
-      state.fileName = "privacy-screenshot";
+      state.fileName = "隐私截图";
       state.boxes = [];
       state.watermark.text = "";
       state.selectedId = null;
@@ -1842,6 +1890,7 @@
       dropzone.style.display = "grid";
       dropzone.classList.remove("dragging");
       canvasWrap.style.display = "none";
+      resetImageView();
       manualButton.classList.remove("primary-button");
       manualButton.classList.add("ghost-button");
       overlay.style.pointerEvents = "none";
@@ -1971,8 +2020,7 @@
 
     function syncOverlayScale() {
       if (!state.image) return;
-      const rect = canvas.getBoundingClientRect();
-      state.scale = rect.width / canvas.width;
+      state.scale = canvas.offsetWidth / canvas.width;
       overlay.style.width = `${canvas.width}px`;
       overlay.style.height = `${canvas.height}px`;
       overlay.style.transform = `scale(${state.scale})`;
@@ -2086,8 +2134,6 @@
       resetButton.disabled = !hasImage;
       applyButton.disabled = !hasImage;
       downloadButton.disabled = !hasImage;
-      mobilePreviewButton.disabled = !hasImage;
-      mobileDownloadButton.disabled = !hasImage;
     }
 
     function setStatus(message, progress) {
