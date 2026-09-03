@@ -1155,6 +1155,10 @@
       }
 
       .stage-toolbar .toolbar-group:first-child {
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap;
+        min-width: 0;
         grid-template-columns: none;
       }
 
@@ -1176,6 +1180,13 @@
         width: auto;
         min-height: 38px;
         padding: 0 13px;
+        flex: 0 0 auto;
+      }
+
+      .stage-toolbar #scanButton {
+        width: auto;
+        flex: 1 1 auto;
+        min-width: 0;
       }
 
       .stage-toolbar #resetButton {
