@@ -1414,6 +1414,38 @@
         margin-top: 12px;
       }
 
+      .mobile-watermark {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: 14px;
+      }
+
+      .mobile-watermark > .section-title,
+      .mobile-watermark > .field:first-of-type {
+        grid-column: 1 / -1;
+      }
+
+      .mobile-watermark > .field:first-of-type {
+        grid-template-columns: 58px minmax(0, 1fr) 34px;
+        column-gap: 8px;
+      }
+
+      .mobile-watermark .mobile-inline-color {
+        display: contents;
+      }
+
+      .mobile-watermark .mobile-inline-color .watermarkColorText,
+      .mobile-watermark .mobile-inline-color #watermarkColorText {
+        display: none;
+      }
+
+      .mobile-watermark .mobile-inline-color .color-input {
+        width: 34px;
+        height: 34px;
+        min-height: 34px;
+        padding: 2px;
+      }
+
       .mobile-watermark .field label {
         display: flex;
         flex-direction: column;
@@ -1451,9 +1483,9 @@
       }
 
       input[type="range"]::-webkit-slider-thumb {
-        width: 24px;
-        height: 24px;
-        margin-top: -8px;
+        width: 18px;
+        height: 18px;
+        margin-top: -5px;
       }
 
       .mobile-dock {
@@ -1728,10 +1760,14 @@
         </section>
 
         <section class="panel-section mobile-watermark">
-          <p class="section-title">文字水印</p>
+          <p class="section-title">水印</p>
           <div class="field">
             <label for="watermarkText"><span>内容</span></label>
             <input id="watermarkText" class="text-input" type="text" placeholder="输入平铺水印文字" />
+            <div class="color-row mobile-inline-color">
+              <input id="watermarkColorText" class="text-input" type="text" value="#111111" />
+              <input id="watermarkColor" class="color-input" type="color" value="#111111" />
+            </div>
           </div>
           <div class="field">
             <label for="watermarkAngle">
@@ -1760,13 +1796,6 @@
               <span id="watermarkGapValue">180</span>
             </label>
             <input id="watermarkGap" type="range" min="80" max="420" value="180" />
-          </div>
-          <div class="field">
-            <label for="watermarkColor"><span>颜色</span></label>
-            <div class="color-row">
-              <input id="watermarkColorText" class="text-input" type="text" value="#111111" />
-              <input id="watermarkColor" class="color-input" type="color" value="#111111" />
-            </div>
           </div>
         </section>
 
