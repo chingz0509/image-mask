@@ -1416,16 +1416,16 @@
       }
 
       .mobile-watermark .field {
-        grid-template-columns: minmax(58px, 72px) minmax(0, 1fr);
+        grid-template-columns: minmax(48px, 58px) minmax(0, 1fr);
         align-items: center;
-        column-gap: 12px;
-        margin-top: 12px;
+        column-gap: 6px;
+        margin-top: 8px;
       }
 
       .mobile-watermark {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        column-gap: 14px;
+        column-gap: 8px;
       }
 
       .mobile-watermark > .section-title,
@@ -1434,8 +1434,8 @@
       }
 
       .mobile-watermark > .field:first-of-type {
-        grid-template-columns: 58px minmax(0, 1fr) 34px;
-        column-gap: 8px;
+        grid-template-columns: 48px minmax(0, 1fr) 46px;
+        column-gap: 6px;
       }
 
       .mobile-watermark .mobile-inline-color {
@@ -1448,9 +1448,9 @@
       }
 
       .mobile-watermark .mobile-inline-color .color-input {
-        width: 34px;
-        height: 34px;
-        min-height: 34px;
+        width: 46px;
+        height: 46px;
+        min-height: 46px;
         padding: 2px;
       }
 
@@ -1945,6 +1945,7 @@
     const toast = document.getElementById("toast");
     const mobileModeLabel = document.getElementById("mobileModeLabel");
     const mobileBoxCount = document.getElementById("mobileBoxCount");
+    const mobilePanelTitle = document.querySelector(".mobile-panel-title");
     const mobilePanelClose = document.getElementById("mobilePanelClose");
     const mobileSheetScrim = document.getElementById("mobileSheetScrim");
     const mobileManualButton = document.getElementById("mobileManualButton");
@@ -2089,6 +2090,7 @@
 
     function selectMobilePanel(panel) {
       controlPanel.dataset.mobilePanel = panel;
+      mobilePanelTitle.textContent = panel === "watermark" ? "水印设置" : "图片设置";
       document.querySelectorAll("[data-mobile-panel-target]").forEach((button) => {
         button.classList.toggle("active", button.dataset.mobilePanelTarget === panel);
       });
