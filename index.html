@@ -560,6 +560,10 @@
       box-shadow: 0 0 0 4px rgba(15, 118, 110, .1);
     }
 
+    .mobile-watermark-confirm {
+      display: none;
+    }
+
     .segmented {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -1447,11 +1451,19 @@
         display: none;
       }
 
-      .mobile-watermark .mobile-inline-color .color-input {
+    .mobile-watermark .mobile-inline-color .color-input {
         width: 46px;
         height: 46px;
         min-height: 46px;
         padding: 2px;
+      }
+
+      .mobile-watermark-confirm {
+        display: flex;
+        grid-column: 1 / -1;
+        width: 100%;
+        min-height: 42px;
+        margin-top: 14px;
       }
 
       .mobile-watermark .field label {
@@ -1805,6 +1817,7 @@
             </label>
             <input id="watermarkGap" type="range" min="80" max="420" value="180" />
           </div>
+          <button id="mobileWatermarkConfirm" class="primary-button mobile-watermark-confirm" type="button">确认水印</button>
         </section>
 
         <section class="panel-section mobile-export">
@@ -1951,6 +1964,7 @@
     const mobileManualButton = document.getElementById("mobileManualButton");
     const mobileUndoButton = document.getElementById("mobileUndoButton");
     const mobileWatermarkButton = document.getElementById("mobileWatermarkButton");
+    const mobileWatermarkConfirm = document.getElementById("mobileWatermarkConfirm");
     const mobileSettingsButton = document.getElementById("mobileSettingsButton");
     const mobileDownloadButton = document.getElementById("mobileDownloadButton");
     const mobileViewport = window.matchMedia("(max-width: 720px)");
@@ -2058,6 +2072,7 @@
       openMobilePanel();
       selectMobilePanel("watermark");
     });
+    mobileWatermarkConfirm.addEventListener("click", closeMobilePanel);
     mobileSettingsButton.addEventListener("click", openMobilePanel);
     mobileDownloadButton.addEventListener("click", handleMobilePrimaryAction);
     mobilePanelClose.addEventListener("click", closeMobilePanel);
