@@ -1388,6 +1388,37 @@
         padding-top: 18px;
       }
 
+      .mobile-watermark .field {
+        grid-template-columns: minmax(58px, 72px) minmax(0, 1fr);
+        align-items: center;
+        column-gap: 12px;
+        margin-top: 12px;
+      }
+
+      .mobile-watermark .field label {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+        line-height: 1.2;
+      }
+
+      .mobile-watermark .field label span:last-child {
+        color: var(--ink);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .mobile-watermark .field input[type="range"] {
+        min-width: 0;
+        height: 28px;
+      }
+
+      .mobile-watermark .text-input,
+      .mobile-watermark .color-row {
+        min-width: 0;
+      }
+
       .segmented button,
       .actions .primary-button,
       .actions .ghost-button,
