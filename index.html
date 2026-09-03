@@ -368,6 +368,7 @@
     }
 
     .redaction-box,
+    .candidate-box,
     .drawing-box {
       position: absolute;
       border: 2px solid var(--accent-2);
@@ -380,6 +381,20 @@
       pointer-events: auto;
       cursor: move;
       touch-action: none;
+    }
+
+    .candidate-box {
+      pointer-events: auto;
+      cursor: move;
+      touch-action: none;
+      border-style: dashed;
+      border-color: var(--gold);
+      background: rgba(189, 139, 19, .14);
+    }
+
+    .candidate-box .box-label {
+      background: var(--gold);
+      color: #1c1605;
     }
 
     .redaction-box.active {
@@ -405,7 +420,8 @@
       box-shadow: 0 5px 14px rgba(209, 73, 91, .18);
     }
 
-    .redaction-box.active .box-label {
+    .redaction-box.active .box-label,
+    .candidate-box.active .box-label {
       background: var(--gold);
       color: #1c1605;
     }
@@ -431,7 +447,9 @@
     }
 
     .redaction-box:hover .box-close-button,
-    .redaction-box.active .box-close-button {
+    .redaction-box.active .box-close-button,
+    .candidate-box:hover .box-close-button,
+    .candidate-box.active .box-close-button {
       opacity: 1;
       transform: scale(1);
     }
@@ -466,7 +484,9 @@
     }
 
     .redaction-box:hover .resize-handle,
-    .redaction-box.active .resize-handle {
+    .redaction-box.active .resize-handle,
+    .candidate-box:hover .resize-handle,
+    .candidate-box.active .resize-handle {
       opacity: 1;
       transform: translate(-50%, -50%) scale(1);
     }
@@ -861,6 +881,13 @@
       box-shadow: 0 18px 48px rgba(20, 18, 14, .2);
     }
 
+    .mobile-context,
+    .mobile-panel-header,
+    .mobile-dock,
+    .mobile-sheet-scrim {
+      display: none;
+    }
+
     @media (max-width: 980px) {
       .topbar {
         align-items: flex-start;
@@ -1040,6 +1067,506 @@
         min-height: 34px;
       }
     }
+
+    /* Mobile v0: keep the editor in view and move secondary controls into a sheet. */
+    @media (max-width: 720px) {
+      :root {
+        --mobile-dock-height: 78px;
+      }
+
+      body {
+        overflow: hidden;
+        background: #eeeae1;
+      }
+
+      .app {
+        height: 100dvh;
+        min-height: 0;
+        grid-template-rows: auto minmax(0, 1fr);
+      }
+
+      .topbar {
+        position: relative;
+        z-index: 30;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 62px;
+        padding: max(9px, env(safe-area-inset-top)) 12px 9px;
+        background: rgba(255, 253, 248, .94);
+        box-shadow: 0 1px 0 rgba(200, 191, 177, .7);
+      }
+
+      .mark {
+        width: 36px;
+        height: 36px;
+      }
+
+      .brand h1 {
+        font-size: 16px;
+      }
+
+      .tagline {
+        display: none;
+      }
+
+      .privacy-note {
+        width: auto;
+        max-width: 150px;
+        padding: 6px 9px;
+        border: 0;
+        background: transparent;
+        color: #3f6d68;
+        font-size: 10px;
+        line-height: 1.25;
+        text-align: right;
+      }
+
+      .privacy-note .icon {
+        display: none;
+      }
+
+      .workspace {
+        position: relative;
+        min-height: 0;
+        height: 100%;
+        padding: 0;
+      }
+
+      .stage-shell {
+        height: 100%;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        background: #f7f3ea;
+        grid-template-rows: auto auto minmax(0, 1fr);
+      }
+
+      .stage-toolbar {
+        display: flex;
+        justify-content: space-between;
+        min-height: 52px;
+        padding: 7px 10px;
+        background: rgba(255, 253, 248, .94);
+      }
+
+      .stage-toolbar .toolbar-group {
+        display: flex;
+      }
+
+      .stage-toolbar .toolbar-group:first-child {
+        grid-template-columns: none;
+      }
+
+      .stage-toolbar #scanButton,
+      .stage-toolbar #manualButton,
+      .stage-toolbar #undoButton {
+        display: none;
+      }
+
+      .stage-toolbar .file-button {
+        width: auto;
+        min-height: 38px;
+        padding: 0 13px;
+      }
+
+      .stage-toolbar #resetButton {
+        width: 42px;
+        min-height: 42px;
+      }
+
+      .mobile-context {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        min-height: 34px;
+        padding: 6px 12px;
+        border-bottom: 1px solid var(--line);
+        background: #f4efe5;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .mobile-context strong {
+        color: var(--ink);
+        font-weight: 750;
+      }
+
+      .mobile-gesture-hint {
+        white-space: nowrap;
+      }
+
+      .stage {
+        min-height: 0;
+        height: 100%;
+        padding: 12px 12px calc(var(--mobile-dock-height) + env(safe-area-inset-bottom) + 12px);
+        place-items: center;
+        overscroll-behavior: none;
+        background-size: 20px 20px;
+      }
+
+      .dropzone {
+        width: min(100%, 430px);
+        min-height: min(420px, 58dvh);
+        border-width: 1px;
+        border-radius: 14px;
+        padding: 28px 22px;
+        background: rgba(255, 253, 248, .9);
+        box-shadow: 0 16px 40px rgba(30, 28, 24, .08);
+      }
+
+      .drop-icon {
+        width: 54px;
+        height: 54px;
+        border-radius: 14px;
+        margin-bottom: 20px;
+      }
+
+      .drop-title {
+        font-size: clamp(28px, 9vw, 38px);
+      }
+
+      .drop-copy {
+        margin-top: 12px;
+        font-size: 14px;
+        line-height: 1.65;
+      }
+
+      .canvas-wrap {
+        max-width: 100%;
+        max-height: 100%;
+        box-shadow: 0 14px 40px rgba(20, 18, 14, .24);
+      }
+
+      canvas {
+        max-width: 100%;
+        max-height: calc(100dvh - 240px - env(safe-area-inset-bottom));
+        object-fit: contain;
+      }
+
+      .image-close-button {
+        display: none;
+      }
+
+      .redaction-box.active .box-close-button,
+      .box-close-button {
+        width: 42px;
+        height: 42px;
+        top: -21px;
+        right: -21px;
+      }
+
+      .resize-handle {
+        width: 20px;
+        height: 20px;
+        border-width: 3px;
+      }
+
+      .box-label {
+        top: -28px;
+        min-height: 24px;
+        padding: 6px 8px;
+        font-size: 12px;
+      }
+
+      .mobile-sheet-scrim {
+        position: fixed;
+        inset: 0;
+        z-index: 42;
+        display: block;
+        background: rgba(22, 22, 22, .38);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .22s ease;
+      }
+
+      .side {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 45;
+        display: block;
+        max-height: min(70dvh, 620px);
+        margin: 0;
+        padding: 0 16px calc(18px + env(safe-area-inset-bottom));
+        overflow: auto;
+        border: 0;
+        border-radius: 18px 18px 0 0;
+        box-shadow: 0 -20px 60px rgba(20, 18, 14, .2);
+        transform: translateY(105%);
+        transition: transform .24s cubic-bezier(.2, .8, .2, 1);
+      }
+
+      body.mobile-sheet-open .mobile-sheet-scrim {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      body.mobile-sheet-open .side {
+        transform: translateY(0);
+      }
+
+      .mobile-panel-header {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        display: block;
+        margin: 0 -16px;
+        padding: 8px 16px 12px;
+        border-bottom: 1px solid var(--line);
+        background: rgba(255, 253, 248, .96);
+        backdrop-filter: blur(14px);
+      }
+
+      .mobile-sheet-handle {
+        width: 38px;
+        height: 4px;
+        margin: 0 auto 10px;
+        border-radius: 999px;
+        background: #cbc3b7;
+      }
+
+      .mobile-panel-title-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+
+      .mobile-panel-title {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 800;
+      }
+
+      .mobile-panel-close {
+        width: 44px;
+        min-height: 44px;
+      }
+
+      .mobile-panel-tabs {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px;
+        padding: 4px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #ebe4d8;
+      }
+
+      .mobile-panel-tab {
+        min-height: 38px;
+        border-radius: 7px;
+        background: transparent;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 750;
+      }
+
+      .mobile-panel-tab.active {
+        background: var(--panel);
+        color: var(--ink);
+        box-shadow: 0 4px 12px rgba(44, 36, 21, .12);
+      }
+
+      .side[data-mobile-panel="redact"] .mobile-watermark,
+      .side[data-mobile-panel="redact"] .mobile-export,
+      .side[data-mobile-panel="watermark"] .mobile-redact,
+      .side[data-mobile-panel="watermark"] .mobile-export,
+      .side[data-mobile-panel="export"] .mobile-redact,
+      .side[data-mobile-panel="export"] .mobile-watermark {
+        display: none;
+      }
+
+      .panel-section {
+        padding: 18px 0;
+      }
+
+      .panel-section:first-of-type {
+        padding-top: 18px;
+      }
+
+      .segmented button,
+      .actions .primary-button,
+      .actions .ghost-button,
+      .text-input,
+      .color-input {
+        min-height: 46px;
+      }
+
+      input[type="range"] {
+        height: 32px;
+      }
+
+      input[type="range"]::-webkit-slider-thumb {
+        width: 24px;
+        height: 24px;
+        margin-top: -8px;
+      }
+
+      .mobile-dock {
+        position: fixed;
+        left: 10px;
+        right: 10px;
+        bottom: max(10px, env(safe-area-inset-bottom));
+        z-index: 35;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) 1.35fr;
+        gap: 3px;
+        min-height: 66px;
+        padding: 5px;
+        border: 1px solid rgba(255, 255, 255, .5);
+        border-radius: 16px;
+        background: rgba(22, 22, 22, .94);
+        box-shadow: 0 18px 44px rgba(20, 18, 14, .3);
+        backdrop-filter: blur(18px);
+      }
+
+      body:not(.has-image) .mobile-dock,
+      body.mobile-sheet-open .mobile-dock {
+        display: none;
+      }
+
+      .mobile-dock-button {
+        min-width: 0;
+        min-height: 56px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        border-radius: 11px;
+        background: transparent;
+        color: #f5f0e7;
+        font-size: 10px;
+        font-weight: 700;
+      }
+
+      .mobile-dock-button svg {
+        width: 20px;
+        height: 20px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .mobile-dock-button:disabled {
+        opacity: .36;
+      }
+
+      .mobile-dock-button.active {
+        background: rgba(255, 253, 248, .14);
+        color: #7dd3c9;
+      }
+
+      .mobile-dock-button.mobile-download {
+        flex-direction: row;
+        gap: 6px;
+        background: #f8f2e7;
+        color: #161616;
+        font-size: 12px;
+      }
+
+      .preview-modal {
+        padding: 0;
+      }
+
+      .preview-dialog {
+        width: 100vw;
+        height: 100dvh;
+        max-height: none;
+        border-radius: 0;
+      }
+
+      .preview-header {
+        padding: max(10px, env(safe-area-inset-top)) 12px 10px;
+      }
+
+      .toast {
+        bottom: calc(var(--mobile-dock-height) + env(safe-area-inset-bottom) + 14px);
+        width: max-content;
+        max-width: calc(100vw - 32px);
+        text-align: center;
+      }
+
+      body.long-image .stage {
+        place-items: start center;
+        overflow: auto;
+      }
+
+      body.long-image canvas {
+        width: min(100%, 560px);
+        max-width: 100%;
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 720px) and (orientation: landscape) {
+      :root {
+        --mobile-dock-height: 0px;
+      }
+
+      .topbar {
+        min-height: 48px;
+        padding-top: 6px;
+        padding-bottom: 6px;
+      }
+
+      .mark {
+        width: 32px;
+        height: 32px;
+      }
+
+      .brand h1 {
+        font-size: 14px;
+      }
+
+      .stage-toolbar {
+        min-height: 46px;
+      }
+
+      .mobile-context {
+        min-height: 28px;
+        padding-top: 3px;
+        padding-bottom: 3px;
+        font-size: 11px;
+      }
+
+      .stage {
+        padding: 8px 104px 8px 8px;
+      }
+
+      canvas {
+        max-height: calc(100dvh - 96px);
+      }
+
+      .mobile-dock {
+        top: 58px;
+        right: 8px;
+        bottom: 8px;
+        left: auto;
+        width: 82px;
+        min-height: 0;
+        grid-template-columns: 1fr;
+        grid-template-rows: repeat(5, 1fr);
+        gap: 3px;
+      }
+
+      .mobile-dock-button,
+      .mobile-dock-button.mobile-download {
+        min-height: 0;
+        flex-direction: column;
+        font-size: 10px;
+      }
+
+      body.long-image .stage {
+        padding-right: 104px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1088,6 +1615,11 @@
           </div>
         </div>
 
+        <div class="mobile-context" aria-live="polite">
+          <span><strong id="mobileModeLabel">浏览模式</strong> · <span id="mobileBoxCount">0 个打码框</span></span>
+          <span class="mobile-gesture-hint">双指缩放 · 单指移动</span>
+        </div>
+
         <div id="stage" class="stage">
           <div id="dropzone" class="dropzone">
             <div>
@@ -1108,7 +1640,22 @@
         </div>
       </div>
 
-      <aside id="controlPanel" class="side" aria-label="控制面板">
+      <aside id="controlPanel" class="side" data-mobile-panel="redact" aria-label="控制面板">
+        <div class="mobile-panel-header">
+          <div class="mobile-sheet-handle" aria-hidden="true"></div>
+          <div class="mobile-panel-title-row">
+            <p class="mobile-panel-title">图片设置</p>
+            <button id="mobilePanelClose" class="icon-button mobile-panel-close" type="button" aria-label="关闭设置">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div class="mobile-panel-tabs" role="tablist" aria-label="设置分类">
+            <button class="mobile-panel-tab active" type="button" data-mobile-panel-target="redact">打码</button>
+            <button class="mobile-panel-tab" type="button" data-mobile-panel-target="watermark">水印</button>
+            <button class="mobile-panel-tab" type="button" data-mobile-panel-target="export">导出</button>
+          </div>
+        </div>
+
         <section class="panel-section mobile-redact">
           <p class="section-title">打码方式</p>
           <div class="segmented" role="group" aria-label="选择打码方式">
@@ -1197,6 +1744,31 @@
           </div>
         </section>
       </aside>
+
+      <div id="mobileSheetScrim" class="mobile-sheet-scrim" aria-hidden="true"></div>
+
+      <nav class="mobile-dock" aria-label="移动端图片工具">
+        <button id="mobileScanButton" class="mobile-dock-button" type="button" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3H5a2 2 0 0 0-2 2v2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></svg>
+          <span>识别</span>
+        </button>
+        <button id="mobileManualButton" class="mobile-dock-button" type="button" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+          <span>框选</span>
+        </button>
+        <button id="mobileUndoButton" class="mobile-dock-button" type="button" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7L4 12l5 5"/><path d="M5 12h9.5a5.5 5.5 0 0 1 0 11H13"/></svg>
+          <span>撤销</span>
+        </button>
+        <button id="mobileSettingsButton" class="mobile-dock-button" type="button" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21h-4v-.08A1.7 1.7 0 0 0 8.97 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.52-1.03H3v-4h.08A1.7 1.7 0 0 0 4.6 8.94a1.7 1.7 0 0 0-.34-1.88L4.2 7l2.83-2.83.06.06a1.7 1.7 0 0 0 1.88.34A1.7 1.7 0 0 0 10 3.08V3h4v.08a1.7 1.7 0 0 0 1.03 1.52 1.7 1.7 0 0 0 1.88-.34l.06-.06L19.8 7l-.06.06a1.7 1.7 0 0 0-.34 1.88A1.7 1.7 0 0 0 20.92 10H21v4h-.08A1.7 1.7 0 0 0 19.4 15z"/></svg>
+          <span>设置</span>
+        </button>
+        <button id="mobileDownloadButton" class="mobile-dock-button mobile-download" type="button" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+          <span>下载</span>
+        </button>
+      </nav>
     </section>
   </main>
 
@@ -1221,6 +1793,7 @@
       image: null,
       fileName: "隐私截图",
       boxes: [],
+      candidates: [],
       watermark: {
         text: "",
         angle: -24,
@@ -1278,6 +1851,15 @@
     const progressBar = document.getElementById("progressBar");
     const resultList = document.getElementById("resultList");
     const toast = document.getElementById("toast");
+    const mobileModeLabel = document.getElementById("mobileModeLabel");
+    const mobileBoxCount = document.getElementById("mobileBoxCount");
+    const mobilePanelClose = document.getElementById("mobilePanelClose");
+    const mobileSheetScrim = document.getElementById("mobileSheetScrim");
+    const mobileScanButton = document.getElementById("mobileScanButton");
+    const mobileManualButton = document.getElementById("mobileManualButton");
+    const mobileUndoButton = document.getElementById("mobileUndoButton");
+    const mobileSettingsButton = document.getElementById("mobileSettingsButton");
+    const mobileDownloadButton = document.getElementById("mobileDownloadButton");
     const mobileViewport = window.matchMedia("(max-width: 720px)");
     const stagePointers = new Map();
     let stageGesture = null;
@@ -1361,17 +1943,61 @@
       if (event.target === previewModal) closePreviewModal();
     });
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") closePreviewModal();
+      if (event.key === "Escape") {
+        closePreviewModal();
+        closeMobilePanel();
+      }
     });
     imageCloseButton.addEventListener("click", removeImage);
+    dropzone.addEventListener("click", () => fileInput.click());
+    dropzone.setAttribute("role", "button");
+    dropzone.setAttribute("tabindex", "0");
+    dropzone.setAttribute("aria-label", "选择需要打码的图片");
+    dropzone.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        fileInput.click();
+      }
+    });
+    mobileScanButton.addEventListener("click", runOcr);
+    mobileManualButton.addEventListener("click", toggleManualMode);
+    mobileUndoButton.addEventListener("click", undoBox);
+    mobileSettingsButton.addEventListener("click", openMobilePanel);
+    mobileDownloadButton.addEventListener("click", handleMobilePrimaryAction);
+    mobilePanelClose.addEventListener("click", closeMobilePanel);
+    mobileSheetScrim.addEventListener("click", closeMobilePanel);
+    document.querySelectorAll("[data-mobile-panel-target]").forEach((button) => {
+      button.addEventListener("click", () => selectMobilePanel(button.dataset.mobilePanelTarget));
+    });
     stage.addEventListener("pointerdown", startStageGesture);
     stage.addEventListener("pointermove", updateStageGesture);
     stage.addEventListener("pointerup", finishStageGesture);
     stage.addEventListener("pointercancel", finishStageGesture);
     window.addEventListener("resize", () => {
-      if (!mobileViewport.matches) resetImageView();
+      if (!mobileViewport.matches) {
+        resetImageView();
+        closeMobilePanel();
+      }
       syncOverlayScale();
     });
+
+    function openMobilePanel() {
+      if (!state.image || !mobileViewport.matches) return;
+      document.body.classList.add("mobile-sheet-open");
+      mobileSettingsButton.classList.add("active");
+    }
+
+    function closeMobilePanel() {
+      document.body.classList.remove("mobile-sheet-open");
+      mobileSettingsButton.classList.remove("active");
+    }
+
+    function selectMobilePanel(panel) {
+      controlPanel.dataset.mobilePanel = panel;
+      document.querySelectorAll("[data-mobile-panel-target]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.mobilePanelTarget === panel);
+      });
+    }
 
     function startStageGesture(event) {
       if (!canUseStageGesture(event)) return;
@@ -1500,6 +2126,7 @@
           state.image = preparedImage;
           state.fileName = file.name.replace(/\.[^.]+$/, "") || "隐私截图";
           state.boxes = [];
+          state.candidates = [];
           state.watermark.text = "";
           watermarkText.value = "";
           state.selectedId = null;
@@ -1507,6 +2134,7 @@
           state.nextId = 1;
           canvas.width = preparedImage.naturalWidth || preparedImage.width;
           canvas.height = preparedImage.naturalHeight || preparedImage.height;
+          document.body.classList.toggle("long-image", canvas.height / Math.max(1, canvas.width) > 1.6);
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(preparedImage, 0, 0);
           dropzone.style.display = "none";
@@ -1569,6 +2197,7 @@
       }
 
       scanButton.disabled = true;
+      mobileScanButton.disabled = true;
       setStatus("正在本地识别文字...", 8);
 
       try {
@@ -1584,11 +2213,16 @@
         });
 
         const found = detectSensitiveText(result.data);
-        const existingKeys = new Set(state.boxes.map(boxKey));
+        const existingKeys = new Set([...state.boxes, ...state.candidates].map(boxKey));
         const additions = found.filter((box) => !existingKeys.has(boxKey(box)));
 
-        state.boxes.push(...additions.map((box) => ({ ...box, id: state.nextId++ })));
-        state.selectedId = additions.length ? state.boxes[state.boxes.length - 1].id : state.selectedId;
+        if (mobileViewport.matches) {
+          state.candidates = additions.map((box) => ({ ...box, id: state.nextId++, pending: true }));
+          state.selectedId = additions.length ? state.candidates[state.candidates.length - 1].id : state.selectedId;
+        } else {
+          state.boxes.push(...additions.map((box) => ({ ...box, id: state.nextId++ })));
+          state.selectedId = additions.length ? state.boxes[state.boxes.length - 1].id : state.selectedId;
+        }
         setStatus(additions.length ? `已找到 ${additions.length} 个疑似隐私区域。` : "没有识别到常见敏感信息，可以手动框选。", 100);
         render();
         toastMessage(additions.length ? `找到 ${additions.length} 处` : "未发现候选框");
@@ -1598,6 +2232,7 @@
         toastMessage("自动识别失败");
       } finally {
         scanButton.disabled = !state.image;
+        mobileScanButton.disabled = !state.image;
       }
     }
 
@@ -1727,7 +2362,10 @@
       state.manualMode = !state.manualMode;
       manualButton.classList.toggle("primary-button", state.manualMode);
       manualButton.classList.toggle("ghost-button", !state.manualMode);
+      mobileManualButton.classList.toggle("active", state.manualMode);
+      mobileManualButton.querySelector("span").textContent = state.manualMode ? "完成" : "框选";
       overlay.style.pointerEvents = state.manualMode ? "auto" : "none";
+      mobileModeLabel.textContent = state.manualMode ? "框选模式" : "浏览模式";
       toastMessage(state.manualMode ? "拖动图片添加打码框" : "已关闭手动框选");
     }
 
@@ -1769,7 +2407,7 @@
 
     function startBoxEdit(event, id, mode) {
       if (!state.image || event.button !== 0) return;
-      const box = state.boxes.find((item) => item.id === id);
+      const box = [...state.boxes, ...state.candidates].find((item) => item.id === id);
       if (!box) return;
       event.preventDefault();
       event.stopPropagation();
@@ -1861,13 +2499,17 @@
 
     function deleteBox(id) {
       state.boxes = state.boxes.filter((box) => box.id !== id);
+      state.candidates = state.candidates.filter((box) => box.id !== id);
       if (state.selectedId === id) state.selectedId = null;
       render();
     }
 
     function undoBox() {
-      if (!state.boxes.length) return;
-      state.boxes.pop();
+      if (state.candidates.length) {
+        state.candidates.pop();
+      } else if (state.boxes.length) {
+        state.boxes.pop();
+      } else return;
       state.selectedId = state.boxes.length ? state.boxes[state.boxes.length - 1].id : null;
       render();
     }
@@ -1876,6 +2518,7 @@
       state.image = null;
       state.fileName = "隐私截图";
       state.boxes = [];
+      state.candidates = [];
       state.watermark.text = "";
       state.selectedId = null;
       state.applied = false;
@@ -1887,12 +2530,17 @@
       fileInput.value = "";
       watermarkText.value = "";
       closePreviewModal();
+      closeMobilePanel();
       dropzone.style.display = "grid";
       dropzone.classList.remove("dragging");
       canvasWrap.style.display = "none";
       resetImageView();
       manualButton.classList.remove("primary-button");
       manualButton.classList.add("ghost-button");
+      mobileManualButton.classList.remove("active");
+      mobileManualButton.querySelector("span").textContent = "框选";
+      mobileModeLabel.textContent = "浏览模式";
+      document.body.classList.remove("long-image");
       overlay.style.pointerEvents = "none";
       setStatus("还没有上传图片。", 0);
       render();
@@ -1920,8 +2568,13 @@
         if (state.mode === "blur") drawBlur(box);
         if (state.mode === "mosaic") drawMosaic(box);
       }
+      for (const box of state.candidates) {
+        if (state.mode === "black") drawBlack(box);
+        if (state.mode === "blur") drawBlur(box);
+        if (state.mode === "mosaic") drawMosaic(box);
+      }
       drawWatermark();
-      state.applied = state.boxes.length > 0 || Boolean(state.watermark.text.trim());
+      state.applied = state.boxes.length > 0 || state.candidates.length > 0 || Boolean(state.watermark.text.trim());
       renderButtons();
     }
 
@@ -2010,6 +2663,44 @@
       toastMessage("PNG 已生成");
     }
 
+    function applyAllCandidates() {
+      if (!state.candidates.length) return;
+      state.boxes.push(...state.candidates.map((box) => ({ ...box, pending: false })));
+      state.selectedId = state.boxes[state.boxes.length - 1].id;
+      state.candidates = [];
+      setStatus(`已应用 ${state.boxes.length} 个打码区域。`, 100);
+      render();
+    }
+
+    async function handleMobilePrimaryAction() {
+      if (!state.image) return;
+      if (state.candidates.length) {
+        applyAllCandidates();
+      }
+      if (!navigator.share || !navigator.canShare) {
+        downloadImage();
+        return;
+      }
+      renderCanvasPreview();
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+      if (!blob) {
+        downloadImage();
+        return;
+      }
+      const date = new Date().toISOString().slice(0, 10);
+      const file = new File([blob], `打码_${state.fileName}_${date}.png`, { type: "image/png" });
+      if (!navigator.canShare({ files: [file] })) {
+        downloadImage();
+        return;
+      }
+      try {
+        await navigator.share({ files: [file], title: "处理后的隐私截图" });
+        toastMessage("已打开分享面板，可保存到相册");
+      } catch (error) {
+        if (error && error.name !== "AbortError") toastMessage("未保存，可再次尝试");
+      }
+    }
+
     function render() {
       renderCanvasPreview();
       syncOverlayScale();
@@ -2028,9 +2719,9 @@
 
     function renderOverlay() {
       overlay.innerHTML = "";
-      for (const box of state.boxes) {
+      for (const box of [...state.boxes, ...state.candidates]) {
         const element = document.createElement("div");
-        element.className = "redaction-box" + (box.id === state.selectedId ? " active" : "");
+        element.className = (box.pending ? "candidate-box" : "redaction-box") + (box.id === state.selectedId ? " active" : "");
         element.style.left = `${box.x}px`;
         element.style.top = `${box.y}px`;
         element.style.width = `${box.w}px`;
@@ -2098,7 +2789,8 @@
 
     function renderResults() {
       resultList.innerHTML = "";
-      if (!state.boxes.length) {
+      const allBoxes = [...state.boxes, ...state.candidates];
+      if (!allBoxes.length) {
         const empty = document.createElement("div");
         empty.className = "empty";
         empty.textContent = state.image ? "还没有打码框。点击“自动识别”或开启“手动框选”。" : "上传图片后，可以手动框选隐私区域，也可以用自动识别生成候选框。";
@@ -2106,13 +2798,13 @@
         return;
       }
 
-      for (const box of state.boxes) {
+      for (const box of allBoxes) {
         const item = document.createElement("div");
         item.className = "result-item";
         item.addEventListener("click", () => selectBox(box.id));
         item.innerHTML = `
           <div class="result-main">
-            <div class="result-type">${escapeHtml(box.type)}</div>
+          <div class="result-type">${box.pending ? "待确认 · " : ""}${escapeHtml(box.type)}</div>
             <div class="result-text">${escapeHtml(box.text)}</div>
           </div>
           <button class="mini-button" aria-label="删除">${iconTrash}</button>
@@ -2127,13 +2819,26 @@
 
     function renderButtons() {
       const hasImage = Boolean(state.image);
-      const hasBoxes = state.boxes.length > 0;
+      const hasBoxes = state.boxes.length > 0 || state.candidates.length > 0;
+      document.body.classList.toggle("has-image", hasImage);
       scanButton.disabled = !hasImage;
       manualButton.disabled = !hasImage;
       undoButton.disabled = !hasBoxes;
       resetButton.disabled = !hasImage;
       applyButton.disabled = !hasImage;
       downloadButton.disabled = !hasImage;
+      mobileScanButton.disabled = !hasImage;
+      mobileManualButton.disabled = !hasImage;
+      mobileUndoButton.disabled = !hasBoxes;
+      mobileSettingsButton.disabled = !hasImage;
+      mobileDownloadButton.disabled = !hasImage;
+      mobileBoxCount.textContent = state.candidates.length
+        ? `${state.candidates.length} 个待确认`
+        : `${state.boxes.length} 个打码框`;
+      const shareCapable = Boolean(window.isSecureContext && navigator.share && navigator.canShare);
+      mobileDownloadButton.querySelector("span").textContent = state.candidates.length
+        ? (shareCapable ? "确认并保存" : "确认并下载")
+        : (shareCapable ? "保存到相册" : "下载 PNG");
     }
 
     function setStatus(message, progress) {
