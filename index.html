@@ -1164,6 +1164,14 @@
         display: none;
       }
 
+      .stage-toolbar #scanButton {
+        display: inline-flex;
+        min-height: 38px;
+        margin-left: 6px;
+        padding: 0 12px;
+        font-size: 13px;
+      }
+
       .stage-toolbar .file-button {
         width: auto;
         min-height: 38px;
@@ -1503,6 +1511,10 @@
         line-height: 1.1;
       }
 
+      .mobile-dock-button.mobile-watermark {
+        color: #f5f0e7;
+      }
+
       .preview-modal {
         padding: 0;
       }
@@ -1780,10 +1792,6 @@
       <div id="mobileSheetScrim" class="mobile-sheet-scrim" aria-hidden="true"></div>
 
       <nav class="mobile-dock" aria-label="移动端图片工具">
-        <button id="mobileScanButton" class="mobile-dock-button" type="button" disabled>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3H5a2 2 0 0 0-2 2v2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></svg>
-          <span>识别</span>
-        </button>
         <button id="mobileManualButton" class="mobile-dock-button" type="button" disabled>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
           <span>框选</span>
@@ -1791,6 +1799,10 @@
         <button id="mobileUndoButton" class="mobile-dock-button" type="button" disabled>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7L4 12l5 5"/><path d="M5 12h9.5a5.5 5.5 0 0 1 0 11H13"/></svg>
           <span>撤销</span>
+        </button>
+        <button id="mobileWatermarkButton" class="mobile-dock-button mobile-watermark" type="button" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h10"/><path d="M17 15l3 3-3 3-3-3 3-3z"/></svg>
+          <span>水印</span>
         </button>
         <button id="mobileSettingsButton" class="mobile-dock-button" type="button" disabled>
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21h-4v-.08A1.7 1.7 0 0 0 8.97 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.52-1.03H3v-4h.08A1.7 1.7 0 0 0 4.6 8.94a1.7 1.7 0 0 0-.34-1.88L4.2 7l2.83-2.83.06.06a1.7 1.7 0 0 0 1.88.34A1.7 1.7 0 0 0 10 3.08V3h4v.08a1.7 1.7 0 0 0 1.03 1.52 1.7 1.7 0 0 0 1.88-.34l.06-.06L19.8 7l-.06.06a1.7 1.7 0 0 0-.34 1.88A1.7 1.7 0 0 0 20.92 10H21v4h-.08A1.7 1.7 0 0 0 19.4 15z"/></svg>
@@ -1887,9 +1899,9 @@
     const mobileBoxCount = document.getElementById("mobileBoxCount");
     const mobilePanelClose = document.getElementById("mobilePanelClose");
     const mobileSheetScrim = document.getElementById("mobileSheetScrim");
-    const mobileScanButton = document.getElementById("mobileScanButton");
     const mobileManualButton = document.getElementById("mobileManualButton");
     const mobileUndoButton = document.getElementById("mobileUndoButton");
+    const mobileWatermarkButton = document.getElementById("mobileWatermarkButton");
     const mobileSettingsButton = document.getElementById("mobileSettingsButton");
     const mobileDownloadButton = document.getElementById("mobileDownloadButton");
     const mobileViewport = window.matchMedia("(max-width: 720px)");
@@ -1991,9 +2003,12 @@
         fileInput.click();
       }
     });
-    mobileScanButton.addEventListener("click", runOcr);
     mobileManualButton.addEventListener("click", toggleManualMode);
     mobileUndoButton.addEventListener("click", undoBox);
+    mobileWatermarkButton.addEventListener("click", () => {
+      openMobilePanel();
+      selectMobilePanel("watermark");
+    });
     mobileSettingsButton.addEventListener("click", openMobilePanel);
     mobileDownloadButton.addEventListener("click", handleMobilePrimaryAction);
     mobilePanelClose.addEventListener("click", closeMobilePanel);
@@ -2229,7 +2244,6 @@
       }
 
       scanButton.disabled = true;
-      mobileScanButton.disabled = true;
       setStatus("正在本地识别文字...", 8);
 
       try {
@@ -2264,7 +2278,6 @@
         toastMessage("自动识别失败");
       } finally {
         scanButton.disabled = !state.image;
-        mobileScanButton.disabled = !state.image;
       }
     }
 
@@ -2859,9 +2872,9 @@
       resetButton.disabled = !hasImage;
       applyButton.disabled = !hasImage;
       downloadButton.disabled = !hasImage;
-      mobileScanButton.disabled = !hasImage;
       mobileManualButton.disabled = !hasImage;
       mobileUndoButton.disabled = !hasBoxes;
+      mobileWatermarkButton.disabled = !hasImage;
       mobileSettingsButton.disabled = !hasImage;
       mobileDownloadButton.disabled = !hasImage;
       mobileBoxCount.textContent = state.candidates.length
