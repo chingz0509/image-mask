@@ -2069,7 +2069,10 @@
       selectMobilePanel("watermark");
     });
     mobileWatermarkConfirm.addEventListener("click", closeMobilePanel);
-    mobileSettingsButton.addEventListener("click", openMobilePanel);
+    mobileSettingsButton.addEventListener("click", () => {
+      openMobilePanel();
+      selectMobilePanel("redact");
+    });
     mobileDownloadButton.addEventListener("click", handleMobilePrimaryAction);
     mobilePanelClose.addEventListener("click", closeMobilePanel);
     mobileSheetScrim.addEventListener("click", closeMobilePanel);
