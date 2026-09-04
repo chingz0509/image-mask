@@ -1408,6 +1408,11 @@
         display: none;
       }
 
+      .side .mobile-status,
+      .side .mobile-results {
+        display: none;
+      }
+
       .panel-section {
         padding: 18px 0;
       }
@@ -1755,12 +1760,11 @@
           </div>
           <div class="mobile-panel-tabs" role="tablist" aria-label="设置分类">
             <button class="mobile-panel-tab active" type="button" data-mobile-panel-target="redact">打码</button>
-            <button class="mobile-panel-tab" type="button" data-mobile-panel-target="watermark">水印</button>
             <button class="mobile-panel-tab" type="button" data-mobile-panel-target="export">导出</button>
           </div>
         </div>
 
-        <section class="panel-section mobile-redact">
+        <section class="panel-section mobile-redact mobile-status">
           <p class="section-title">打码方式</p>
           <div class="segmented" role="group" aria-label="选择打码方式">
             <button class="active" data-mode="mosaic">马赛克</button>
@@ -1831,7 +1835,7 @@
           </div>
         </section>
 
-        <section class="panel-section mobile-redact">
+        <section class="panel-section mobile-redact mobile-results">
           <p class="section-title">识别状态</p>
           <div class="status">
             <div id="statusText">还没有上传图片。</div>
